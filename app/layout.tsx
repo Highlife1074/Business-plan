@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import CloudProvider from "@/components/CloudProvider";
 
 export const metadata: Metadata = {
   title: "Simulateur de business plan",
@@ -11,7 +12,9 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <CloudProvider>{children}</CloudProvider>
+      </body>
     </html>
   );
 }

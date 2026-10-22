@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Plan } from "@/lib/types";
 import { deletePlan, listPlans, savePlan } from "@/lib/storage";
 import { demoPlan } from "@/lib/demo";
 import { uid } from "@/lib/uid";
-import { readNdjson } from "@/lib/ndjson";
-
-type GenEvent =
-  | { type: "progress"; chars: number }
-  | { type: "done"; plan: Plan }
-  | { type: "error"; error: string };
+import { generatePlan } from "@/lib/claude";
+import KeySettings from "@/components/KeySettings";
+import { useCloud } from "@/components/CloudProvider";
 
 const EXAMPLES = ["Lavage auto", "Pizzeria", "Boulangerie", "Salle de sport", "Food truck", "Coworking"];
 
@@ -23,7 +21,8 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
-  useEffect(() => setPlans(listPlans()), []);
+  const { version } = useCloud();
+  useEffect(() => setPlans(listPlans()), [version]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [k]: e.target.value });
@@ -34,20 +33,9 @@ export default function Home() {
     setError("");
     setProgress(0);
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      let created: Plan | null = null;
-      await readNdjson<GenEvent>(res, (ev) => {
-        if (ev.type === "progress") setProgress(ev.chars);
-        else if (ev.type === "error") throw new Error(ev.error);
-        else if (ev.type === "done") created = ev.plan;
-      });
-      if (!created) throw new Error("Aucun plan reçu.");
+      const created = await generatePlan(form, setProgress);
       savePlan(created);
-      router.push(`/plan/${(created as Plan).id}`);
+      router.push(`/plan?id=${created.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setBusy(false);
@@ -57,7 +45,7 @@ export default function Home() {
   function openDemo() {
     const plan = demoPlan(uid());
     savePlan(plan);
-    router.push(`/plan/${plan.id}`);
+    router.push(`/plan?id=${plan.id}`);
   }
 
   function importFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -70,7 +58,7 @@ export default function Home() {
         plan.id = uid();
         plan.updatedAt = new Date().toISOString();
         savePlan(plan);
-        router.push(`/plan/${plan.id}`);
+        router.push(`/plan?id=${plan.id}`);
       } catch {
         setError("Fichier invalide : exportez un plan depuis l'application.");
       }
@@ -93,6 +81,8 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      <KeySettings />
 
       <form className="card" onSubmit={generate}>
         <h2>Nouveau business plan avec Claude</h2>
@@ -151,7 +141,7 @@ export default function Home() {
               </span>
               <span className="muted small">Modifié le {new Date(p.updatedAt).toLocaleDateString("fr-FR")}</span>
               <div className="row">
-                <a className="btn sm primary" href={`/plan/${p.id}`}>Ouvrir</a>
+                <Link className="btn sm primary" href={`/plan?id=${p.id}`}>Ouvrir</Link>
                 <button className="btn sm danger" onClick={() => remove(p.id)}>Supprimer</button>
               </div>
             </div>

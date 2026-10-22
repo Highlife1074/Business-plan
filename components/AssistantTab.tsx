@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { TabProps } from "./tab";
 import type { ChatMessage } from "@/lib/types";
 import { planContext } from "@/lib/context";
-import { readNdjson } from "@/lib/ndjson";
-
-type AskEvent = { type: "text"; delta: string } | { type: "done" } | { type: "error"; error: string };
+import { askClaude } from "@/lib/claude";
 
 const SUGGESTIONS = [
   "Quels sont les 3 points faibles de ce plan aux yeux d'un banquier ?",
@@ -34,16 +32,9 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
     setStreaming("");
     let answer = "";
     try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context: planContext(plan, proj), messages: history }),
-      });
-      await readNdjson<AskEvent>(res, (ev) => {
-        if (ev.type === "text") {
-          answer += ev.delta;
-          setStreaming(answer);
-        } else if (ev.type === "error") throw new Error(ev.error);
+      await askClaude(planContext(plan, proj), history, (delta) => {
+        answer += delta;
+        setStreaming(answer);
       });
       update((p) => ({ ...p, chat: [...p.chat, { role: "assistant", content: answer }] }));
     } catch (err) {

@@ -20,24 +20,39 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 
 Le **scénario** (curseurs volumes / prix / coûts, préréglages pessimiste / réaliste / optimiste) permet de tester la sensibilité sans toucher aux hypothèses de base.
 
-## Démarrer
+## Utilisation
+
+L'app est publiée automatiquement sur **GitHub Pages** à chaque mise à jour de `main` :
+https://highlife1074.github.io/Business-plan/
+
+Au premier lancement, ouvrez **Réglages** sur la page d'accueil :
+1. **Se connecter avec Google** : vos plans et votre clé Claude sont sauvegardés dans Firebase (Firestore)
+   et retrouvés automatiquement sur tous vos appareils (PC, téléphone…).
+2. Collez votre **clé API Claude** (créée sur [console.anthropic.com](https://console.anthropic.com), rubrique *API Keys*).
+   Elle n'est jamais écrite dans le code ni sur GitHub ; elle est stockée dans le navigateur et dans votre espace Firestore privé.
+
+Sans connexion, l'app fonctionne aussi : les données restent alors dans le navigateur de l'appareil.
+
+Sans clé, l'exemple « lavage auto en Pologne » et toute la partie simulation fonctionnent ; seules la génération et l'assistant nécessitent Claude.
+
+### En local
 
 ```bash
 npm install
-cp .env.example .env.local   # puis renseigner ANTHROPIC_API_KEY
-npm run dev                  # http://localhost:3000
+npm run dev     # http://localhost:3000
 ```
 
-Sans clé API, l'exemple « lavage auto en Pologne » et toute la partie simulation fonctionnent ; seules la génération et l'assistant nécessitent Claude.
+## Firebase
 
-### Mise en ligne (accès depuis le téléphone)
-
-Le plus simple : importer le dépôt sur [Vercel](https://vercel.com/new), ajouter la variable d'environnement `ANTHROPIC_API_KEY`, puis déployer.
-La clé reste côté serveur (routes `/api/generate` et `/api/ask`), elle n'est jamais envoyée au navigateur.
+Configuration du projet dans `lib/firebase-config.ts` (valeurs publiques par nature).
+Les règles de sécurité Firestore sont dans `firestore.rules` : chaque utilisateur connecté n'accède qu'à `users/{son uid}/…`.
+Dans la console Firebase : activer **Authentication → Google**, ajouter `highlife1074.github.io` aux domaines autorisés,
+créer la base **Firestore** et y coller les règles.
 
 ## Données
 
-Les plans sont enregistrés dans le navigateur (localStorage). Utilisez **Exporter (.json)** pour sauvegarder ou transférer un plan, et **Importer** sur la page d'accueil pour le recharger. **Imprimer / PDF** produit une version papier.
+Les plans sont enregistrés dans le navigateur (localStorage) et, une fois connecté, synchronisés dans Firestore
+(la version la plus récente de chaque plan l'emporte). Utilisez **Exporter (.json)** pour sauvegarder ou transférer un plan, et **Importer** sur la page d'accueil pour le recharger. **Imprimer / PDF** produit une version papier.
 
 ## Hypothèses de calcul
 
@@ -50,7 +65,7 @@ Les plans sont enregistrés dans le navigateur (localStorage). Utilisez **Export
 
 ## Technique
 
-Next.js (App Router) + TypeScript, SDK `@anthropic-ai/sdk` (modèle `claude-opus-5-5`, sorties structurées validées par Zod), graphiques Recharts.
+Next.js (App Router, export statique) + TypeScript, SDK `@anthropic-ai/sdk` appelé depuis le navigateur (modèle `claude-opus-5-5`, sorties structurées validées par Zod), graphiques Recharts. Publication : `.github/workflows/pages.yml`.
 
 ```bash
 npm test        # tests du moteur de calcul (lib/finance.ts)
