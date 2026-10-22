@@ -9,6 +9,7 @@ import { demoPlan } from "@/lib/demo";
 import { uid } from "@/lib/uid";
 import { generatePlan } from "@/lib/claude";
 import KeySettings from "@/components/KeySettings";
+import { useCloud } from "@/components/CloudProvider";
 
 const EXAMPLES = ["Lavage auto", "Pizzeria", "Boulangerie", "Salle de sport", "Food truck", "Coworking"];
 
@@ -20,7 +21,8 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
-  useEffect(() => setPlans(listPlans()), []);
+  const { version } = useCloud();
+  useEffect(() => setPlans(listPlans()), [version]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [k]: e.target.value });

@@ -25,10 +25,13 @@ Le **scénario** (curseurs volumes / prix / coûts, préréglages pessimiste / r
 L'app est publiée automatiquement sur **GitHub Pages** à chaque mise à jour de `main` :
 https://highlife1074.github.io/Business-plan/
 
-Au premier lancement, ouvrez **Réglages** sur la page d'accueil et collez votre clé API Claude
-(créée sur [console.anthropic.com](https://console.anthropic.com), rubrique *API Keys*).
-La clé est enregistrée **uniquement dans le navigateur** de l'appareil : elle n'est jamais écrite dans le code ni sur GitHub,
-et l'app appelle Claude directement depuis ce navigateur. À saisir une fois par appareil.
+Au premier lancement, ouvrez **Réglages** sur la page d'accueil :
+1. **Se connecter avec Google** : vos plans et votre clé Claude sont sauvegardés dans Firebase (Firestore)
+   et retrouvés automatiquement sur tous vos appareils (PC, téléphone…).
+2. Collez votre **clé API Claude** (créée sur [console.anthropic.com](https://console.anthropic.com), rubrique *API Keys*).
+   Elle n'est jamais écrite dans le code ni sur GitHub ; elle est stockée dans le navigateur et dans votre espace Firestore privé.
+
+Sans connexion, l'app fonctionne aussi : les données restent alors dans le navigateur de l'appareil.
 
 Sans clé, l'exemple « lavage auto en Pologne » et toute la partie simulation fonctionnent ; seules la génération et l'assistant nécessitent Claude.
 
@@ -39,9 +42,17 @@ npm install
 npm run dev     # http://localhost:3000
 ```
 
+## Firebase
+
+Configuration du projet dans `lib/firebase-config.ts` (valeurs publiques par nature).
+Les règles de sécurité Firestore sont dans `firestore.rules` : chaque utilisateur connecté n'accède qu'à `users/{son uid}/…`.
+Dans la console Firebase : activer **Authentication → Google**, ajouter `highlife1074.github.io` aux domaines autorisés,
+créer la base **Firestore** et y coller les règles.
+
 ## Données
 
-Les plans sont enregistrés dans le navigateur (localStorage). Utilisez **Exporter (.json)** pour sauvegarder ou transférer un plan, et **Importer** sur la page d'accueil pour le recharger. **Imprimer / PDF** produit une version papier.
+Les plans sont enregistrés dans le navigateur (localStorage) et, une fois connecté, synchronisés dans Firestore
+(la version la plus récente de chaque plan l'emporte). Utilisez **Exporter (.json)** pour sauvegarder ou transférer un plan, et **Importer** sur la page d'accueil pour le recharger. **Imprimer / PDF** produit une version papier.
 
 ## Hypothèses de calcul
 

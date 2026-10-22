@@ -15,6 +15,7 @@ import SwotTab from "@/components/SwotTab";
 import QuotesTab from "@/components/QuotesTab";
 import AssistantTab from "@/components/AssistantTab";
 import type { TabProps } from "@/components/tab";
+import { useCloud } from "@/components/CloudProvider";
 
 const TABS = [
   { id: "summary", label: "Sommaire", C: SummaryTab },
@@ -35,8 +36,12 @@ export default function PlanView({ id }: { id: string }) {
   const [tab, setTab] = useState<TabId>("summary");
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
 
+  const { version, syncing, ready } = useCloud();
+
+  // Relit le plan après chaque synchronisation (modifications faites sur un autre appareil)
+  useEffect(() => setPlan(getPlan(id)), [id, version]);
+
   useEffect(() => {
-    setPlan(getPlan(id));
     try {
       const saved = sessionStorage.getItem(`bp-sim:tab:${id}`) as TabId | null;
       if (saved && TABS.some((t) => t.id === saved)) setTab(saved);
@@ -67,7 +72,7 @@ export default function PlanView({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (plan === undefined) return <main className="container muted">Chargement…</main>;
+  if (plan === undefined || (plan === null && (syncing || !ready))) return <main className="container muted">Chargement…</main>;
   if (plan === null || !proj)
     return (
       <main className="container">

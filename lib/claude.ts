@@ -11,10 +11,13 @@ import {
   type GenerateRequest,
 } from "./ai";
 import type { ChatMessage, Plan } from "./types";
+import { cloudSaveSettings } from "./firebase";
+import { currentUid } from "./storage";
 
 // L'app est hébergée en pages statiques (GitHub Pages) : Claude est appelé directement
-// depuis le navigateur, avec la clé API saisie par l'utilisateur et conservée uniquement
-// dans ce navigateur (localStorage). La clé n'est jamais écrite dans le code ni sur GitHub.
+// depuis le navigateur, avec la clé API saisie par l'utilisateur. La clé est conservée dans
+// le navigateur et, une fois connecté avec Google, dans l'espace Firestore privé de l'utilisateur
+// pour être retrouvée sur ses autres appareils. Elle n'est jamais écrite dans le code ni sur GitHub.
 
 const MODEL = "claude-opus-5-5";
 const KEY_STORAGE = "bp-sim:apiKey";
@@ -27,11 +30,18 @@ export function getApiKey(): string {
   }
 }
 
-export function setApiKey(key: string) {
+// Met à jour la clé dans ce navigateur uniquement (utilisé lors de la synchronisation)
+export function setLocalApiKey(key: string) {
   try {
     if (key) localStorage.setItem(KEY_STORAGE, key.trim());
     else localStorage.removeItem(KEY_STORAGE);
   } catch {}
+}
+
+export async function setApiKey(key: string): Promise<void> {
+  setLocalApiKey(key);
+  const uid = currentUid();
+  if (uid) await cloudSaveSettings(uid, { apiKey: key.trim() });
 }
 
 function client(): Anthropic {
