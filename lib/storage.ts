@@ -3,6 +3,7 @@
 import type { Plan } from "./types";
 import { cloudDeletePlan, cloudListPlans, cloudSavePlan } from "./firebase";
 import { mergePlans } from "./merge";
+import { normalizePlan } from "./plan";
 
 // Les plans sont toujours enregistrés dans le navigateur (localStorage), qui sert de cache.
 // Une fois connecté avec Google, ils sont aussi synchronisés dans Firestore pour être
@@ -46,11 +47,12 @@ const readAll = () => readJson<Record<string, Plan>>(KEY, {});
 const writeAll = (plans: Record<string, Plan>) => writeJson(KEY, plans);
 
 export function listPlans(): Plan[] {
-  return Object.values(readAll()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return Object.values(readAll()).map(normalizePlan).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export function getPlan(id: string): Plan | null {
-  return readAll()[id] ?? null;
+  const p = readAll()[id];
+  return p ? normalizePlan(p) : null;
 }
 
 function pushToCloud(plan: Plan) {

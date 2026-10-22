@@ -5,6 +5,7 @@ import {
   GoogleAuthProvider,
   getAuth,
   onAuthStateChanged,
+  reauthenticateWithPopup,
   signInWithPopup,
   signOut,
   type User,
@@ -55,7 +56,47 @@ export async function signInWithGoogle(): Promise<void> {
   await signInWithPopup(getAuth(firebaseApp()), new GoogleAuthProvider());
 }
 
+// Jeton d'accès Gmail (envoi + lecture), valable 1 heure, demandé via une fenêtre Google.
+// À appeler depuis un clic (les navigateurs bloquent les fenêtres ouvertes sans geste).
+const GMAIL_SCOPES = [
+  "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.readonly",
+];
+const TOKEN_KEY = "bp-sim:gmail-token";
+
+export function cachedGmailToken(): string | null {
+  try {
+    const t = JSON.parse(sessionStorage.getItem(TOKEN_KEY) ?? "null") as { token: string; exp: number } | null;
+    return t && t.exp > Date.now() ? t.token : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearGmailToken() {
+  try {
+    sessionStorage.removeItem(TOKEN_KEY);
+  } catch {}
+}
+
+export async function requestGmailToken(): Promise<string> {
+  const auth = getAuth(firebaseApp());
+  const provider = new GoogleAuthProvider();
+  GMAIL_SCOPES.forEach((s) => provider.addScope(s));
+  if (auth.currentUser?.email) provider.setCustomParameters({ login_hint: auth.currentUser.email });
+  const result = auth.currentUser
+    ? await reauthenticateWithPopup(auth.currentUser, provider)
+    : await signInWithPopup(auth, provider);
+  const token = GoogleAuthProvider.credentialFromResult(result)?.accessToken;
+  if (!token) throw new Error("Google n'a pas fourni l'accès à Gmail.");
+  try {
+    sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ token, exp: Date.now() + 55 * 60 * 1000 }));
+  } catch {}
+  return token;
+}
+
 export async function signOutUser(): Promise<void> {
+  clearGmailToken();
   await signOut(getAuth(firebaseApp()));
 }
 

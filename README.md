@@ -16,6 +16,7 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 | **Juridique** | Forme juridique, autorisations, fiscalité… propres au pays (éditable, approfondissable avec Claude) |
 | **SWOT & risques** | Forces, faiblesses, opportunités, menaces, matrice des risques avec mitigation, marché, hypothèses clés |
 | **Devis** | Devis à obtenir, enregistrement des offres reçues, comparatif. Un devis **retenu** lié à une ligne du plan remplace automatiquement son montant dans tous les calculs |
+| **Démarches** | Agent fournisseurs : Claude cherche des fournisseurs (recherche web) pour chaque devis à obtenir, rédige les demandes de devis dans la langue du pays, vous validez puis l'e-mail part depuis votre Gmail ; les réponses sont relevées, analysées par Claude et enregistrables comme devis ; relances proposées après le délai choisi |
 | **Assistant Claude** | Conversation avec Claude, qui voit toutes les hypothèses et les résultats calculés |
 
 Le **scénario** (curseurs volumes / prix / coûts, préréglages pessimiste / réaliste / optimiste) permet de tester la sensibilité sans toucher aux hypothèses de base.
@@ -49,6 +50,16 @@ Les règles de sécurité Firestore sont dans `firestore.rules` : chaque utilisa
 Dans la console Firebase : activer **Authentication → Google**, ajouter `highlife1074.github.io` aux domaines autorisés,
 créer la base **Firestore** et y coller les règles.
 
+## Gmail (onglet Démarches)
+
+L'envoi et la lecture des e-mails passent par l'API Gmail, avec votre compte Google (autorisation demandée au premier envoi, valable 1 heure).
+À faire une fois dans la [console Google Cloud](https://console.cloud.google.com) du projet Firebase (`business-plan-708ce`) :
+1. **API et services → Bibliothèque → Gmail API → Activer**.
+2. **Google Auth Platform → Audience** : si l'application est « En test », ajoutez votre adresse Gmail dans **Utilisateurs test**.
+   Google affichera « application non validée » : **Paramètres avancés → Accéder à l'application**, c'est normal pour un usage personnel.
+
+Rien n'est envoyé sans votre confirmation. Les relances sont proposées à l'ouverture de l'app (pas d'envoi automatique en arrière-plan).
+
 ## Données
 
 Les plans sont enregistrés dans le navigateur (localStorage) et, une fois connecté, synchronisés dans Firestore
@@ -68,6 +79,6 @@ Les plans sont enregistrés dans le navigateur (localStorage) et, une fois conne
 Next.js (App Router, export statique) + TypeScript, SDK `@anthropic-ai/sdk` appelé depuis le navigateur (modèle `claude-opus-5-5`, sorties structurées validées par Zod), graphiques Recharts. Publication : `.github/workflows/pages.yml`.
 
 ```bash
-npm test        # tests du moteur de calcul (lib/finance.ts)
+npm test        # tests du moteur de calcul, de la synchronisation et des relances
 npm run build
 ```
