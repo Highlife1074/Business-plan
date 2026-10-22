@@ -6,14 +6,12 @@ import { uid } from "./uid";
 // Tous les champs sont requis : Claude doit fournir une base complète, modifiable ensuite.
 const level = z.enum(["faible", "moyen", "élevé"]);
 
-export const GeneratedPlanSchema = z.object({
+// La génération se fait en deux appels (chiffres, puis textes) : un schéma unique
+// dépasse la taille de grammaire acceptée par les sorties structurées de l'API.
+export const FiguresSchema = z.object({
   name: z.string().describe("Nom court du projet"),
   currency: z.string().describe("Code devise ISO 4217 du pays (EUR, PLN, MAD, CHF…)"),
   description: z.string().describe("Description du concept en 2-3 phrases"),
-  summary: z
-    .string()
-    .describe("Synthèse exécutive (3-4 paragraphes séparés par une ligne vide) : concept, marché, chiffres clés, financement"),
-  market: z.string().describe("Analyse du marché local et de la concurrence (1-2 paragraphes)"),
   params: z.object({
     startDate: z.string().describe("Mois de démarrage de l'activité, format YYYY-MM"),
     horizonYears: z.number().describe("Horizon de projection en années (5 recommandé)"),
@@ -76,6 +74,13 @@ export const GeneratedPlanSchema = z.object({
       ),
     }),
   }),
+});
+
+export const TextsSchema = z.object({
+  summary: z
+    .string()
+    .describe("Synthèse exécutive (3-4 paragraphes séparés par une ligne vide) : concept, marché, chiffres clés, financement"),
+  market: z.string().describe("Analyse du marché local et de la concurrence (1-2 paragraphes)"),
   legal: z
     .array(z.object({ title: z.string(), content: z.string() }))
     .describe(
@@ -93,6 +98,8 @@ export const GeneratedPlanSchema = z.object({
     .array(z.object({ item: z.string(), category: z.string(), estimatedAmount: z.number() }))
     .describe("Liste des devis à obtenir auprès de fournisseurs pour fiabiliser le plan"),
 });
+
+export const GeneratedPlanSchema = FiguresSchema.extend(TextsSchema.shape);
 
 export type GeneratedPlan = z.infer<typeof GeneratedPlanSchema>;
 
@@ -114,19 +121,35 @@ Règles :
 - Le volet juridique doit être concret et spécifique au pays (noms locaux des formes juridiques, registres, autorisations).
 - Rédige tout le texte en français.`;
 
-export function generatePrompt(req: GenerateRequest): string {
+function briefLines(req: GenerateRequest): string[] {
   return [
     `Type d'activité : ${req.businessType}`,
     `Pays : ${req.country}`,
     req.city ? `Ville / région : ${req.city}` : "",
     req.budget ? `Budget ou apport envisagé : ${req.budget}` : "",
     req.details ? `Précisions du porteur de projet : ${req.details}` : "",
-    "",
-    "Construis le business plan complet : hypothèses chiffrées détaillées (lignes de revenus, charges fixes, personnel, investissements, financement), synthèse, marché, juridique, SWOT, risques et liste des devis à obtenir.",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].filter(Boolean);
 }
+
+export function figuresPrompt(req: GenerateRequest): string {
+  return [
+    ...briefLines(req),
+    "",
+    "Établis les hypothèses chiffrées détaillées du business plan : lignes de revenus, charges fixes, personnel, investissements et financement, ainsi que les paramètres généraux (fiscalité, inflation, saisonnalité, montée en charge).",
+  ].join("\n");
+}
+
+export function textsPrompt(req: GenerateRequest, figures: z.infer<typeof FiguresSchema>): string {
+  return [
+    ...briefLines(req),
+    "",
+    "Hypothèses chiffrées déjà retenues pour ce projet (JSON) :",
+    JSON.stringify(figures),
+    "",
+    "Rédige, en cohérence avec ces chiffres : la synthèse exécutive, l'analyse du marché, le volet juridique propre au pays, le SWOT, les risques, les hypothèses clés et la liste des devis à obtenir.",
+  ].join("\n");
+}
+
 
 // Transforme la réponse de Claude en Plan exploitable par l'application.
 export function toPlan(g: GeneratedPlan, req: GenerateRequest): Plan {

@@ -1,12 +1,15 @@
 "use client";
 
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import {
   ASK_SYSTEM,
+  FiguresSchema,
   GENERATE_SYSTEM,
-  GeneratedPlanSchema,
-  generatePrompt,
+  TextsSchema,
+  figuresPrompt,
+  textsPrompt,
   toPlan,
   type GenerateRequest,
 } from "./ai";
@@ -69,30 +72,85 @@ export function apiErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : "Erreur inconnue";
 }
 
-// Génère un business plan complet ; onProgress reçoit le nombre de caractères rédigés.
-export async function generatePlan(req: GenerateRequest, onProgress: (chars: number) => void): Promise<Plan> {
-  const stream = client().beta.messages.stream({
+// Appel avec sortie JSON validée par un schéma Zod. Utilise les sorties structurées de l'API ;
+// si le schéma est refusé (grammaire trop volumineuse), redemande le JSON dans la consigne
+// et le valide côté navigateur.
+async function structured<S extends z.ZodType>(opts: {
+  schema: S;
+  system: string;
+  prompt: string;
+  effort: "low" | "medium" | "high";
+  onText?: (delta: string) => void;
+}): Promise<z.infer<S>> {
+  const base = {
     model: MODEL,
     max_tokens: 64000,
     betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    thinking: { type: "adaptive" },
-    output_config: { effort: "high", format: betaZodOutputFormat(GeneratedPlanSchema) },
-    system: GENERATE_SYSTEM,
-    messages: [{ role: "user", content: generatePrompt(req) }],
-  });
-  let chars = 0;
-  stream.on("text", (delta) => {
-    chars += delta.length;
-    onProgress(chars);
-  });
-  try {
+    fallbacks: "default" as const,
+    thinking: { type: "adaptive" as const },
+  };
+  const run = async (constrained: boolean) => {
+    const stream = client().beta.messages.stream({
+      ...base,
+      output_config: constrained
+        ? { effort: opts.effort, format: betaZodOutputFormat(opts.schema) }
+        : { effort: opts.effort },
+      system: constrained
+        ? opts.system
+        : `${opts.system}\n\nRéponds uniquement avec un objet JSON valide (sans texte autour) conforme à ce schéma JSON :\n${JSON.stringify(z.toJSONSchema(opts.schema))}`,
+      messages: [{ role: "user", content: opts.prompt }],
+    });
+    if (opts.onText) stream.on("text", opts.onText);
     const message = await stream.finalMessage();
     if (message.stop_reason === "refusal") throw new Error("Claude a refusé cette demande.");
-    if (message.stop_reason === "max_tokens" || !message.parsed_output) {
-      throw new Error("Réponse incomplète de Claude, réessayez.");
+    if (message.stop_reason === "max_tokens") throw new Error("Réponse incomplète de Claude, réessayez.");
+    if (constrained) {
+      if (!message.parsed_output) throw new Error("Réponse illisible de Claude, réessayez.");
+      return message.parsed_output as z.infer<S>;
     }
-    return toPlan(message.parsed_output, req);
+    const text = message.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    let json: unknown = null;
+    try {
+      json = JSON.parse(text.slice(start, end + 1));
+    } catch {}
+    const parsed = opts.schema.safeParse(json);
+    if (!parsed.success) throw new Error("Réponse de Claude non conforme, réessayez.");
+    return parsed.data;
+  };
+  try {
+    return await run(true);
+  } catch (err) {
+    if (err instanceof Anthropic.BadRequestError && /grammar|schema/i.test(err.message)) return run(false);
+    throw err;
+  }
+}
+
+// Génère un business plan complet en deux temps : hypothèses chiffrées, puis textes cohérents
+// avec ces chiffres. onProgress reçoit le nombre de caractères rédigés.
+export async function generatePlan(req: GenerateRequest, onProgress: (chars: number) => void): Promise<Plan> {
+  let chars = 0;
+  const onText = (delta: string) => {
+    chars += delta.length;
+    onProgress(chars);
+  };
+  try {
+    const figures = await structured({
+      schema: FiguresSchema,
+      system: GENERATE_SYSTEM,
+      prompt: figuresPrompt(req),
+      effort: "high",
+      onText,
+    });
+    const texts = await structured({
+      schema: TextsSchema,
+      system: GENERATE_SYSTEM,
+      prompt: textsPrompt(req, figures),
+      effort: "medium",
+      onText,
+    });
+    return toPlan({ ...figures, ...texts }, req);
   } catch (err) {
     throw new Error(apiErrorMessage(err));
   }
