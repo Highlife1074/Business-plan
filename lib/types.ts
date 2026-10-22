@@ -1,0 +1,155 @@
+// Modèle de données d'un business plan.
+// Les paramètres chiffrés (Params) sont la seule source de vérité :
+// tous les tableaux (résultats, trésorerie, point mort…) sont recalculés à partir d'eux.
+
+export interface RevenueStream {
+  id: string;
+  label: string;
+  unitLabel: string; // ex. "lavage", "pizza", "client"
+  unitPrice: number; // prix de vente HT par unité
+  unitsPerDay: number; // volume moyen par jour d'ouverture, en régime de croisière
+  openDaysPerMonth: number;
+  variableCostPct: number; // coût variable en % du CA (matières, consommables, commissions…)
+  growthPct: number; // croissance annuelle des volumes
+  note: string;
+}
+
+export interface FixedCost {
+  id: string;
+  label: string;
+  monthly: number; // montant mensuel HT
+  note: string;
+}
+
+export interface StaffLine {
+  id: string;
+  role: string;
+  count: number;
+  grossMonthly: number; // salaire brut mensuel par personne
+  startMonth: number; // 1 = premier mois d'activité
+}
+
+export interface Investment {
+  id: string;
+  label: string;
+  amount: number; // HT
+  depreciationYears: number; // 0 = non amortissable (terrain, BFR, caution…)
+  note: string;
+}
+
+export interface Loan {
+  id: string;
+  label: string;
+  amount: number;
+  ratePct: number; // taux annuel
+  years: number; // durée totale, différé compris
+  deferralMonths: number; // différé d'amortissement (intérêts seuls)
+}
+
+export interface Financing {
+  equity: number; // apport en capital
+  subsidies: number; // subventions
+  loans: Loan[];
+}
+
+export interface Scenario {
+  volumePct: number; // 100 = réaliste
+  pricePct: number;
+  costPct: number;
+}
+
+export interface Params {
+  startDate: string; // "YYYY-MM"
+  horizonYears: number;
+  vatRatePct: number;
+  corporateTaxPct: number;
+  employerChargesPct: number; // charges patronales en % du brut
+  inflationPct: number; // indexation annuelle des prix et des charges
+  discountRatePct: number; // taux d'actualisation pour la VAN
+  seasonality: number[]; // 12 coefficients, janvier → décembre (1 = mois moyen)
+  rampUpMonths: number; // durée de montée en charge
+  rampUpStartPct: number; // % du régime de croisière au premier mois
+  revenueStreams: RevenueStream[];
+  fixedCosts: FixedCost[];
+  staff: StaffLine[];
+  investments: Investment[];
+  financing: Financing;
+  scenario: Scenario;
+}
+
+export interface LegalItem {
+  id: string;
+  title: string;
+  content: string;
+}
+
+export type Level = "faible" | "moyen" | "élevé";
+
+export interface Risk {
+  id: string;
+  risk: string;
+  probability: Level;
+  impact: Level;
+  mitigation: string;
+}
+
+export type QuoteStatus = "à demander" | "reçu" | "retenu" | "refusé";
+
+export interface Quote {
+  id: string;
+  supplier: string;
+  label: string;
+  amount: number; // HT
+  kind: "investissement" | "charge mensuelle";
+  // Ligne du business plan alimentée par ce devis lorsqu'il est "retenu"
+  linkedId: string | null;
+  status: QuoteStatus;
+  date: string;
+  validUntil: string;
+  contact: string;
+  notes: string;
+}
+
+export interface QuoteNeed {
+  id: string;
+  item: string;
+  category: string;
+  estimatedAmount: number;
+  done: boolean;
+}
+
+export interface Texts {
+  summary: string;
+  market: string;
+  legal: LegalItem[];
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+  risks: Risk[];
+  keyAssumptions: string[];
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface Plan {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  meta: {
+    name: string;
+    businessType: string;
+    country: string;
+    city: string;
+    currency: string; // code ISO 4217
+    description: string;
+  };
+  params: Params;
+  texts: Texts;
+  quotes: Quote[];
+  quoteNeeds: QuoteNeed[];
+  chat: ChatMessage[];
+}
