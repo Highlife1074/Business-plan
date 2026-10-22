@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/effect-guard";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { cloudEnabled, cloudGetSettings, cloudSaveSettings, signInWithGoogle, signOutUser, watchUser, type User } from "@/lib/firebase";
 import { flushPending, onCloudError, setCloudUser, syncWithCloud } from "@/lib/storage";
