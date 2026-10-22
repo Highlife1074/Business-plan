@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_SENDER } from "./plan";
 import type { Plan } from "./types";
 import { uid } from "./uid";
 
@@ -205,6 +206,9 @@ export function toPlan(g: GeneratedPlan, req: GenerateRequest): Plan {
     quotes: [],
     quoteNeeds: g.quoteNeeds.map((q) => ({ id: uid(), ...q, done: false })),
     chat: [],
+    suppliers: [],
+    outreach: [],
+    sender: { ...DEFAULT_SENDER },
   };
 }
 

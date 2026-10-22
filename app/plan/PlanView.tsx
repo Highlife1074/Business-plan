@@ -14,6 +14,7 @@ import LegalTab from "@/components/LegalTab";
 import SwotTab from "@/components/SwotTab";
 import QuotesTab from "@/components/QuotesTab";
 import AssistantTab from "@/components/AssistantTab";
+import OutreachTab from "@/components/OutreachTab";
 import type { TabProps } from "@/components/tab";
 import { useCloud } from "@/components/CloudProvider";
 
@@ -26,6 +27,7 @@ const TABS = [
   { id: "legal", label: "Juridique", C: LegalTab },
   { id: "swot", label: "SWOT & risques", C: SwotTab },
   { id: "quotes", label: "Devis", C: QuotesTab },
+  { id: "outreach", label: "Démarches", C: OutreachTab },
   { id: "assistant", label: "Assistant Claude", C: AssistantTab },
 ] as const;
 

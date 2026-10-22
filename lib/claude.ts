@@ -22,7 +22,7 @@ import { currentUid } from "./storage";
 // le navigateur et, une fois connecté avec Google, dans l'espace Firestore privé de l'utilisateur
 // pour être retrouvée sur ses autres appareils. Elle n'est jamais écrite dans le code ni sur GitHub.
 
-const MODEL = "claude-opus-5-5";
+export const MODEL = "claude-opus-5-5";
 const KEY_STORAGE = "bp-sim:apiKey";
 
 export function getApiKey(): string {
@@ -47,7 +47,7 @@ export async function setApiKey(key: string): Promise<void> {
   if (uid) await cloudSaveSettings(uid, { apiKey: key.trim() });
 }
 
-function client(): Anthropic {
+export function client(): Anthropic {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error("Clé API Claude manquante : renseignez-la dans « Réglages » sur la page d'accueil.");
   return new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
@@ -75,7 +75,7 @@ export function apiErrorMessage(err: unknown): string {
 // Appel avec sortie JSON validée par un schéma Zod. Utilise les sorties structurées de l'API ;
 // si le schéma est refusé (grammaire trop volumineuse), redemande le JSON dans la consigne
 // et le valide côté navigateur.
-async function structured<S extends z.ZodType>(opts: {
+export async function structured<S extends z.ZodType>(opts: {
   schema: S;
   system: string;
   prompt: string;

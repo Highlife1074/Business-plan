@@ -118,6 +118,68 @@ export interface QuoteNeed {
   done: boolean;
 }
 
+// --- Démarches : recherche de fournisseurs, e-mails, suivi et relances ---
+
+export interface Supplier {
+  id: string;
+  needId: string; // devis à obtenir concerné (QuoteNeed.id)
+  name: string;
+  email: string;
+  website: string;
+  phone: string;
+  city: string;
+  notes: string;
+  source: "claude" | "manuel";
+}
+
+export interface OutreachMessage {
+  id: string;
+  direction: "envoyé" | "reçu";
+  kind: "demande" | "relance" | "réponse";
+  from: string;
+  subject: string;
+  body: string;
+  date: string; // ISO
+  gmailId: string | null;
+}
+
+export type OutreachStatus = "brouillon" | "envoyé" | "relancé" | "réponse reçue" | "devis enregistré" | "clos";
+
+export interface ReplyAnalysis {
+  summary: string;
+  hasQuote: boolean;
+  amount: number; // HT, 0 si aucun montant
+  kind: "investissement" | "charge mensuelle";
+  linkedId: string | null; // ligne du plan concernée
+  conditions: string;
+  nextStep: string;
+}
+
+export interface Outreach {
+  id: string;
+  supplierId: string;
+  status: OutreachStatus;
+  to: string;
+  subject: string;
+  draft: string; // brouillon en cours (demande ou relance)
+  draftKind: "demande" | "relance";
+  threadId: string | null;
+  lastSentAt: string | null;
+  followUps: number;
+  messages: OutreachMessage[];
+  analysis: ReplyAnalysis | null;
+  quoteId: string | null;
+}
+
+export interface Sender {
+  name: string;
+  company: string;
+  phone: string;
+  email: string;
+  followUpDays: number; // délai avant relance
+  maxFollowUps: number;
+}
+
 export interface Texts {
   summary: string;
   market: string;
@@ -152,4 +214,7 @@ export interface Plan {
   quotes: Quote[];
   quoteNeeds: QuoteNeed[];
   chat: ChatMessage[];
+  suppliers: Supplier[];
+  outreach: Outreach[];
+  sender: Sender;
 }

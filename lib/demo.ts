@@ -184,5 +184,8 @@ export function demoPlan(id: string): Plan {
       { id: "qn-5", item: "Assurance multirisque", category: "Services", estimatedAmount: 14400, done: false },
     ],
     chat: [],
+    suppliers: [],
+    outreach: [],
+    sender: { name: "", company: "", phone: "", email: "", followUpDays: 5, maxFollowUps: 2 },
   };
 }
