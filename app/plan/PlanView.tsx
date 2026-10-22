@@ -17,6 +17,7 @@ import AssistantTab from "@/components/AssistantTab";
 import OutreachTab from "@/components/OutreachTab";
 import type { TabProps } from "@/components/tab";
 import { useCloud } from "@/components/CloudProvider";
+import CurrencyProvider from "@/components/CurrencyProvider";
 
 const TABS = [
   { id: "summary", label: "Sommaire", C: SummaryTab },
@@ -124,7 +125,9 @@ export default function PlanView({ id }: { id: string }) {
           </button>
         ))}
       </nav>
-      <Current {...props} />
+      <CurrencyProvider plan={plan} update={update}>
+        <Current {...props} />
+      </CurrencyProvider>
     </main>
   );
 }

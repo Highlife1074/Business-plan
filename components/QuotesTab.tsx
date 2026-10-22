@@ -2,6 +2,7 @@
 
 import EditTable from "./EditTable";
 import { Num } from "./ui";
+import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { Quote, QuoteNeed, QuoteStatus } from "@/lib/types";
 import { money } from "@/lib/format";
@@ -11,7 +12,9 @@ const STATUSES: QuoteStatus[] = ["à demander", "reçu", "retenu", "refusé"];
 
 export default function QuotesTab({ plan, update, askClaude }: TabProps) {
   const cur = plan.meta.currency;
+  const money_ = useMoney();
   const m = (v: number) => money(v, cur);
+  const mt = (v: number) => (money_.display !== cur ? `${m(v)} (≈ ${money_.fmt(v)})` : m(v));
   const quotes = plan.quotes;
   const setQuotes = (q: Quote[]) => update((p) => ({ ...p, quotes: q }));
   const setQuote = (id: string, patch: Partial<Quote>) => setQuotes(quotes.map((q) => (q.id === id ? { ...q, ...patch } : q)));
@@ -112,7 +115,7 @@ export default function QuotesTab({ plan, update, askClaude }: TabProps) {
               </tbody>
             </table>
           </div>
-          <p className="muted small" style={{ marginTop: 8 }}>Total des investissements retenus sur devis : {m(totalRetained)}</p>
+          <p className="muted small" style={{ marginTop: 8 }}>Total des investissements retenus sur devis : {mt(totalRetained)}</p>
         </div>
       )}
 
