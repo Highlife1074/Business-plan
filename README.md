@@ -20,20 +20,24 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 
 Le **scénario** (curseurs volumes / prix / coûts, préréglages pessimiste / réaliste / optimiste) permet de tester la sensibilité sans toucher aux hypothèses de base.
 
-## Démarrer
+## Utilisation
+
+L'app est publiée automatiquement sur **GitHub Pages** à chaque mise à jour de `main` :
+https://highlife1074.github.io/Business-plan/
+
+Au premier lancement, ouvrez **Réglages** sur la page d'accueil et collez votre clé API Claude
+(créée sur [console.anthropic.com](https://console.anthropic.com), rubrique *API Keys*).
+La clé est enregistrée **uniquement dans le navigateur** de l'appareil : elle n'est jamais écrite dans le code ni sur GitHub,
+et l'app appelle Claude directement depuis ce navigateur. À saisir une fois par appareil.
+
+Sans clé, l'exemple « lavage auto en Pologne » et toute la partie simulation fonctionnent ; seules la génération et l'assistant nécessitent Claude.
+
+### En local
 
 ```bash
 npm install
-cp .env.example .env.local   # puis renseigner ANTHROPIC_API_KEY
-npm run dev                  # http://localhost:3000
+npm run dev     # http://localhost:3000
 ```
-
-Sans clé API, l'exemple « lavage auto en Pologne » et toute la partie simulation fonctionnent ; seules la génération et l'assistant nécessitent Claude.
-
-### Mise en ligne (accès depuis le téléphone)
-
-Le plus simple : importer le dépôt sur [Vercel](https://vercel.com/new), ajouter la variable d'environnement `ANTHROPIC_API_KEY`, puis déployer.
-La clé reste côté serveur (routes `/api/generate` et `/api/ask`), elle n'est jamais envoyée au navigateur.
 
 ## Données
 
@@ -50,7 +54,7 @@ Les plans sont enregistrés dans le navigateur (localStorage). Utilisez **Export
 
 ## Technique
 
-Next.js (App Router) + TypeScript, SDK `@anthropic-ai/sdk` (modèle `claude-opus-5-5`, sorties structurées validées par Zod), graphiques Recharts.
+Next.js (App Router, export statique) + TypeScript, SDK `@anthropic-ai/sdk` appelé depuis le navigateur (modèle `claude-opus-5-5`, sorties structurées validées par Zod), graphiques Recharts. Publication : `.github/workflows/pages.yml`.
 
 ```bash
 npm test        # tests du moteur de calcul (lib/finance.ts)

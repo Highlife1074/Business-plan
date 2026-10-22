@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { Plan } from "@/lib/types";
 import { getPlan, savePlan } from "@/lib/storage";
 import { projectPlan } from "@/lib/finance";
@@ -29,8 +30,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-export default function PlanPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function PlanView({ id }: { id: string }) {
   const [plan, setPlan] = useState<Plan | null | undefined>(undefined);
   const [tab, setTab] = useState<TabId>("summary");
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
     return (
       <main className="container">
         <p>Business plan introuvable dans ce navigateur.</p>
-        <a className="btn" href="/">← Retour</a>
+        <Link className="btn" href="/">← Retour</Link>
       </main>
     );
 
@@ -98,7 +98,7 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
   return (
     <main className="container">
       <div className="header">
-        <a className="btn sm no-print" href="/">← Mes plans</a>
+        <Link className="btn sm no-print" href="/">← Mes plans</Link>
         <div className="grow">
           <h1 style={{ marginBottom: 2 }}>{plan.meta.name}</h1>
           <div className="muted small">
