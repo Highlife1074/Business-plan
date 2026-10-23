@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { CURRENCIES, convertPlan, fetchRates } from "@/lib/currency";
 import { money, num } from "@/lib/format";
+import { Num } from "./ui";
 import type { Plan } from "@/lib/types";
 
 // Devise d'affichage d'un plan : les montants restent saisis et calculés dans la devise du plan,
@@ -13,6 +14,8 @@ interface CurrencyState {
   rate: number; // 1 base = rate display
   fmt: (v: number, compact?: boolean) => string; // montant converti
   fmtBase: (v: number, compact?: boolean) => string; // montant dans la devise du plan
+  setDisplay: (code: string) => void;
+  options: { code: string; label: string }[];
 }
 
 const Ctx = createContext<CurrencyState | null>(null);
@@ -21,6 +24,13 @@ export function useMoney(): CurrencyState {
   const c = useContext(Ctx);
   if (!c) throw new Error("CurrencyProvider manquant");
   return c;
+}
+
+// Champ de saisie d'un montant : affiché et saisi dans la devise d'affichage,
+// enregistré dans la devise du plan.
+export function MoneyNum({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const { rate } = useMoney();
+  return <Num value={Math.round(value * rate * 100) / 100} onChange={(v) => onChange(v / rate)} />;
 }
 
 export default function CurrencyProvider({
@@ -80,15 +90,17 @@ export default function CurrencyProvider({
   const active = display !== base && typeof found === "number" && found > 0;
   const rate = active ? found! : 1;
   const shown = active ? display : base;
+  const options = CURRENCIES.some((c) => c.code === base) ? CURRENCIES : [{ code: base, label: base }, ...CURRENCIES];
   const value: CurrencyState = {
     base,
     display: shown,
     rate,
     fmt: (v, compact) => money(v * rate, shown, compact),
     fmtBase: (v, compact) => money(v, base, compact),
+    setDisplay,
+    options,
   };
 
-  const options = CURRENCIES.some((c) => c.code === base) ? CURRENCIES : [{ code: base, label: base }, ...CURRENCIES];
 
   function convertForGood() {
     if (!active) return;
@@ -124,8 +136,8 @@ export default function CurrencyProvider({
               <span className="muted"><span className="spinner" /> Récupération du taux…</span>
             ) : active ? (
               <span className="muted">
-                1 {base} = <strong>{num(rate, 4)} {display}</strong> (taux du {rates?.date}). Rapports convertis ; les saisies
-                (Paramètres, Devis) restent en {base}.
+                1 {base} = <strong>{num(rate, 4)} {display}</strong> (taux du {rates?.date}). Tous les montants, saisies
+                comprises, sont affichés en {display} ; le plan reste enregistré en {base}.
               </span>
             ) : (
               <span className="neg">{error || `Taux ${base} → ${display} indisponible.`}</span>

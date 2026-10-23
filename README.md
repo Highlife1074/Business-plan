@@ -21,7 +21,8 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 
 Le **convertisseur de devises**, en haut de chaque plan, affiche tous les rapports (sommaire, résultats, trésorerie, point mort)
 dans la devise de votre choix au taux du jour (sources : open.er-api.com, puis jsDelivr `currency-api` en secours ; taux mis en cache 12 h).
-Les saisies restent dans la devise du plan, avec l'équivalent converti sur les totaux. Le bouton **Convertir le plan en …**
+Tous les montants suivent la devise choisie, **y compris les champs de saisie** (Paramètres, Devis) : un montant saisi en EUR
+est enregistré dans la devise du plan au taux du jour. Le choix est aussi disponible dans Paramètres (« Devise des montants »). Le bouton **Convertir le plan en …**
 change définitivement la devise du plan et convertit tous les montants (prix, charges, salaires, investissements, financement, devis).
 
 Le **scénario** (curseurs volumes / prix / coûts, préréglages pessimiste / réaliste / optimiste) permet de tester la sensibilité sans toucher aux hypothèses de base.
