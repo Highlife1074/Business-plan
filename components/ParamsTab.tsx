@@ -2,6 +2,7 @@
 
 import EditTable from "./EditTable";
 import ScenarioBar from "./ScenarioBar";
+import { useMoney } from "./CurrencyProvider";
 import { Num } from "./ui";
 import type { TabProps } from "./tab";
 import type { FixedCost, Investment, Loan, Params, RevenueStream, StaffLine } from "@/lib/types";
@@ -13,7 +14,10 @@ const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Se
 export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
   const p = plan.params;
   const cur = plan.meta.currency;
+  const money_ = useMoney();
   const m = (v: number) => money(v, cur);
+  // Totaux : montant dans la devise du plan, suivi de l'équivalent dans la devise d'affichage
+  const mt = (v: number) => (money_.display !== cur ? `${m(v)} (≈ ${money_.fmt(v)})` : m(v));
   const setP = (patch: Partial<Params>) => update((pl) => ({ ...pl, params: { ...pl.params, ...patch } }));
   const effective = applyQuotes(p, plan.quotes);
   const overridden = (id: string, base: number, eff: number) =>
@@ -106,7 +110,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
             <tr className="total">
               <td colSpan={8}>
                 CA mensuel en régime de croisière (hors saisonnalité) :{" "}
-                {m(p.revenueStreams.reduce((a, s) => a + s.unitPrice * s.unitsPerDay * s.openDaysPerMonth, 0))}
+                {mt(p.revenueStreams.reduce((a, s) => a + s.unitPrice * s.unitsPerDay * s.openDaysPerMonth, 0))}
               </td>
               <td></td>
             </tr>
@@ -129,7 +133,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           footer={
             <tr className="total">
               <td>Total mensuel</td>
-              <td>{m(effective.fixedCosts.reduce((a, c) => a + c.monthly, 0))}</td>
+              <td>{mt(effective.fixedCosts.reduce((a, c) => a + c.monthly, 0))}</td>
               <td>{m(effective.fixedCosts.reduce((a, c) => a + c.monthly, 0) * 12)} / an</td>
               <td></td>
             </tr>
@@ -175,7 +179,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           footer={
             <tr className="total">
               <td>Total (devis retenus inclus)</td>
-              <td>{m(totalInv)}</td>
+              <td>{mt(totalInv)}</td>
               <td colSpan={2}></td>
               <td></td>
             </tr>
@@ -208,7 +212,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           ]}
         />
         <p className={proj.indicators.financingGap < 0 ? "neg" : "muted"} style={{ marginTop: 12 }}>
-          Ressources : {m(proj.indicators.totalFinancing)} · Besoins : {m(totalInv)} ·{" "}
+          Ressources : {mt(proj.indicators.totalFinancing)} · Besoins : {mt(totalInv)} ·{" "}
           {proj.indicators.financingGap >= 0 ? `Excédent ${m(proj.indicators.financingGap)}` : `Manque ${m(-proj.indicators.financingGap)}`}
         </p>
       </div>

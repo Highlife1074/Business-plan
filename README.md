@@ -19,6 +19,11 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 | **Démarches** | Agent fournisseurs : Claude cherche des fournisseurs (recherche web) pour chaque devis à obtenir, rédige les demandes de devis dans la langue du pays, vous validez puis l'e-mail part depuis votre Gmail ; les réponses sont relevées, analysées par Claude et enregistrables comme devis ; relances proposées après le délai choisi |
 | **Assistant Claude** | Conversation avec Claude, qui voit toutes les hypothèses et les résultats calculés |
 
+Le **convertisseur de devises**, en haut de chaque plan, affiche tous les rapports (sommaire, résultats, trésorerie, point mort)
+dans la devise de votre choix au taux du jour (sources : open.er-api.com, puis jsDelivr `currency-api` en secours ; taux mis en cache 12 h).
+Les saisies restent dans la devise du plan, avec l'équivalent converti sur les totaux. Le bouton **Convertir le plan en …**
+change définitivement la devise du plan et convertit tous les montants (prix, charges, salaires, investissements, financement, devis).
+
 Le **scénario** (curseurs volumes / prix / coûts, préréglages pessimiste / réaliste / optimiste) permet de tester la sensibilité sans toucher aux hypothèses de base.
 
 ## Utilisation
@@ -79,6 +84,6 @@ Les plans sont enregistrés dans le navigateur (localStorage) et, une fois conne
 Next.js (App Router, export statique) + TypeScript, SDK `@anthropic-ai/sdk` appelé depuis le navigateur (modèle `claude-opus-5-5`, sorties structurées validées par Zod), graphiques Recharts. Publication : `.github/workflows/pages.yml`.
 
 ```bash
-npm test        # tests du moteur de calcul, de la synchronisation et des relances
+npm test        # tests du moteur de calcul, de la synchronisation, des relances et de la conversion
 npm run build
 ```

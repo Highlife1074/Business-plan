@@ -4,16 +4,18 @@ import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import FinTable, { type FinLine } from "./FinTable";
 import ScenarioBar from "./ScenarioBar";
+import { useMoney } from "./CurrencyProvider";
 import { Kpi, useChartColors } from "./ui";
 import type { TabProps } from "./tab";
 import type { YearRow } from "@/lib/finance";
-import { money, num, pct } from "@/lib/format";
+import { num, pct } from "@/lib/format";
 
 const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
 export default function BreakEvenTab({ plan, proj, update, askClaude }: TabProps) {
   const cur = plan.meta.currency;
-  const m = (v: number) => money(v, cur);
+  const { fmt } = useMoney();
+  const m = (v: number) => fmt(v);
   const c = useChartColors();
   const [year, setYear] = useState(1);
   const y = proj.years[Math.min(year, proj.years.length) - 1];
@@ -98,7 +100,7 @@ export default function BreakEvenTab({ plan, proj, update, askClaude }: TabProps
             <BarChart data={data}>
               <CartesianGrid stroke={c.border} vertical={false} />
               <XAxis dataKey="name" tick={axis} stroke={c.border} />
-              <YAxis tick={axis} stroke={c.border} tickFormatter={(v) => money(v, cur, true)} width={70} />
+              <YAxis tick={axis} stroke={c.border} tickFormatter={(v) => fmt(v, true)} width={70} />
               <Tooltip contentStyle={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }} formatter={(v) => m(Number(v))} />
               <Legend />
               <Bar dataKey="CA prévu" fill={c.c2} radius={[4, 4, 0, 0]} />

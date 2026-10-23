@@ -6,13 +6,15 @@ import {
 } from "recharts";
 import { Kpi, useChartColors } from "./ui";
 import ScenarioBar from "./ScenarioBar";
+import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
-import { money, monthName, num, pct } from "@/lib/format";
+import { monthName, num, pct } from "@/lib/format";
 
 export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) {
   const cur = plan.meta.currency;
-  const m = (v: number) => money(v, cur);
-  const mc = (v: number) => money(v, cur, true);
+  const { fmt } = useMoney();
+  const m = (v: number) => fmt(v);
+  const mc = (v: number) => fmt(v, true);
   const ind = proj.indicators;
   const y1 = proj.years[0];
   const yN = proj.years[proj.years.length - 1];

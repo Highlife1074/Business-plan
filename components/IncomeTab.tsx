@@ -3,12 +3,14 @@
 import { useState } from "react";
 import FinTable, { type FinLine } from "./FinTable";
 import ScenarioBar from "./ScenarioBar";
+import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { MonthRow, YearRow } from "@/lib/finance";
-import { money, pct } from "@/lib/format";
+import { pct } from "@/lib/format";
 
 export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
-  const m = (v: number) => money(v, plan.meta.currency);
+  const { fmt } = useMoney();
+  const m = (v: number) => fmt(v);
   const p = (v: number) => pct(v);
   const [detailYear, setDetailYear] = useState(1);
 
