@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Num } from "./ui";
+import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { Outreach, OutreachMessage, Plan, QuoteNeed, Sender, Supplier } from "@/lib/types";
 import { analyzeReply, draftEmail, findSuppliers } from "@/lib/agent";
 import { getMessageIdHeader, getThread, sendEmail } from "@/lib/gmail";
 import { cachedGmailToken } from "@/lib/firebase";
 import { daysSince, followUpDue, newReplies } from "@/lib/outreach";
-import { money } from "@/lib/format";
 import { uid } from "@/lib/uid";
 
 const BLANK_SUPPLIER = { name: "", email: "", website: "", phone: "", city: "", notes: "" };
@@ -37,7 +37,7 @@ export default function OutreachTab({ plan, update }: TabProps) {
   const [info, setInfo] = useState("");
   const [adding, setAdding] = useState<string | null>(null);
   const [form, setForm] = useState(BLANK_SUPPLIER);
-  const cur = plan.meta.currency;
+  const { fmt } = useMoney();
 
   const setOutreach = (id: string, fn: (o: Outreach) => Outreach) =>
     update((p) => ({ ...p, outreach: p.outreach.map((o) => (o.id === id ? fn(o) : o)) }));
@@ -265,7 +265,7 @@ export default function OutreachTab({ plan, update }: TabProps) {
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
                 <h2 style={{ margin: 0 }}>{need.item} {need.done && <span className="badge retenu">devis obtenu</span>}</h2>
-                <span className="muted small">{need.category} · estimation {money(need.estimatedAmount, cur)}</span>
+                <span className="muted small">{need.category} · estimation {fmt(need.estimatedAmount)}</span>
               </div>
               <div className="row">
                 <button className="btn sm" disabled={Boolean(busy[`search-${need.id}`])} onClick={() => search(need)}>
@@ -346,7 +346,7 @@ function SupplierRow({
   onAnalyze: (o: Outreach) => void;
   onSaveQuote: (o: Outreach) => void;
 }) {
-  const cur = plan.meta.currency;
+  const { fmt } = useMoney();
   const due = o ? followUpDue(o, plan.sender) : false;
   const editing = o && o.draft.trim() !== "";
   const drafting = Boolean(busy[`draft-${s.id}`]);
@@ -403,7 +403,7 @@ function SupplierRow({
           <p className="small" style={{ margin: "4px 0" }}>{o.analysis.summary}</p>
           {o.analysis.hasQuote && (
             <p className="small" style={{ margin: "4px 0" }}>
-              Montant : <strong>{money(o.analysis.amount, cur)}</strong> HT ({o.analysis.kind})
+              Montant : <strong>{fmt(o.analysis.amount)}</strong> HT ({o.analysis.kind})
               {o.analysis.linkedId && <> · ligne : {[...plan.params.investments, ...plan.params.fixedCosts].find((l) => l.id === o.analysis!.linkedId)?.label}</>}
             </p>
           )}

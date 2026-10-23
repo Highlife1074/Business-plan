@@ -2,12 +2,12 @@
 
 import EditTable from "./EditTable";
 import ScenarioBar from "./ScenarioBar";
-import { useMoney } from "./CurrencyProvider";
+import { MoneyNum, useMoney } from "./CurrencyProvider";
 import { Num } from "./ui";
 import type { TabProps } from "./tab";
 import type { FixedCost, Investment, Loan, Params, RevenueStream, StaffLine } from "@/lib/types";
 import { applyQuotes } from "@/lib/finance";
-import { money, num } from "@/lib/format";
+import { num } from "@/lib/format";
 
 const MONTHS = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 
@@ -15,9 +15,10 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
   const p = plan.params;
   const cur = plan.meta.currency;
   const money_ = useMoney();
-  const m = (v: number) => money(v, cur);
+  const dc = money_.display; // devise d'affichage et de saisie
+  const m = (v: number) => money_.fmt(v);
   // Totaux : montant dans la devise du plan, suivi de l'équivalent dans la devise d'affichage
-  const mt = (v: number) => (money_.display !== cur ? `${m(v)} (≈ ${money_.fmt(v)})` : m(v));
+  const mt = m;
   const setP = (patch: Partial<Params>) => update((pl) => ({ ...pl, params: { ...pl.params, ...patch } }));
   const effective = applyQuotes(p, plan.quotes);
   const overridden = (id: string, base: number, eff: number) =>
@@ -56,8 +57,15 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
             <input value={plan.meta.name} onChange={(e) => update((pl) => ({ ...pl, meta: { ...pl.meta, name: e.target.value } }))} />
           </label>
           <label className="field">
-            Devise (ISO)
-            <input value={plan.meta.currency} maxLength={3} onChange={(e) => update((pl) => ({ ...pl, meta: { ...pl.meta, currency: e.target.value.toUpperCase() } }))} />
+            Devise des montants
+            <select value={dc} onChange={(e) => money_.setDisplay(e.target.value)}>
+              {money_.options.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.code} — {c.label}
+                  {c.code === cur ? " (devise du plan)" : ""}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="field">
             Début d&apos;activité
@@ -99,7 +107,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           columns={[
             { key: "label", label: "Ligne de revenu", type: "text" },
             { key: "unitLabel", label: "Unité", type: "text", width: 90 },
-            { key: "unitPrice", label: "Prix HT", type: "number" },
+            { key: "unitPrice", label: `Prix HT (${dc})`, type: "money" },
             { key: "unitsPerDay", label: "Unités / jour", type: "number" },
             { key: "openDaysPerMonth", label: "Jours / mois", type: "number" },
             { key: "variableCostPct", label: "Coût variable %", type: "number" },
@@ -126,7 +134,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           blank={{ label: "Nouvelle charge", monthly: 0, note: "" }}
           columns={[
             { key: "label", label: "Charge", type: "text" },
-            { key: "monthly", label: "Montant / mois", type: "number" },
+            { key: "monthly", label: `Montant / mois (${dc})`, type: "money" },
             { key: "note", label: "Note", type: "text", width: 200 },
           ]}
           rowExtra={(r) => overridden(r.id, r.monthly, effective.fixedCosts.find((x) => x.id === r.id)?.monthly ?? r.monthly)}
@@ -150,7 +158,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           columns={[
             { key: "role", label: "Poste", type: "text" },
             { key: "count", label: "Effectif", type: "number" },
-            { key: "grossMonthly", label: "Brut mensuel", type: "number" },
+            { key: "grossMonthly", label: `Brut mensuel (${dc})`, type: "money" },
             { key: "startMonth", label: "Embauche (mois n°)", type: "number" },
           ]}
           footer={
@@ -171,7 +179,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           blank={{ label: "Nouvel investissement", amount: 0, depreciationYears: 5, note: "" }}
           columns={[
             { key: "label", label: "Poste", type: "text" },
-            { key: "amount", label: "Montant HT", type: "number" },
+            { key: "amount", label: `Montant HT (${dc})`, type: "money" },
             { key: "depreciationYears", label: "Amort. (ans)", type: "number" },
             { key: "note", label: "Note", type: "text", width: 200 },
           ]}
@@ -192,11 +200,11 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
         <div className="grid grid-kpi" style={{ marginBottom: 12 }}>
           <label className="field">
             Apport en capital
-            <Num value={p.financing.equity} onChange={(v) => setP({ financing: { ...p.financing, equity: v } })} />
+            <MoneyNum value={p.financing.equity} onChange={(v) => setP({ financing: { ...p.financing, equity: v } })} />
           </label>
           <label className="field">
             Subventions
-            <Num value={p.financing.subsidies} onChange={(v) => setP({ financing: { ...p.financing, subsidies: v } })} />
+            <MoneyNum value={p.financing.subsidies} onChange={(v) => setP({ financing: { ...p.financing, subsidies: v } })} />
           </label>
         </div>
         <EditTable<Loan>
@@ -205,7 +213,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           blank={{ label: "Prêt bancaire", amount: 0, ratePct: 5, years: 7, deferralMonths: 0 }}
           columns={[
             { key: "label", label: "Emprunt", type: "text" },
-            { key: "amount", label: "Montant", type: "number" },
+            { key: "amount", label: `Montant (${dc})`, type: "money" },
             { key: "ratePct", label: "Taux %", type: "number" },
             { key: "years", label: "Durée (ans)", type: "number" },
             { key: "deferralMonths", label: "Différé (mois)", type: "number" },

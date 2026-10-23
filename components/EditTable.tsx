@@ -1,12 +1,13 @@
 "use client";
 
 import { Num } from "./ui";
+import { MoneyNum } from "./CurrencyProvider";
 import { uid } from "@/lib/uid";
 
 export interface Column<T> {
   key: keyof T & string;
   label: string;
-  type: "text" | "number" | "select";
+  type: "text" | "number" | "money" | "select";
   options?: { value: string; label: string }[];
   width?: number;
 }
@@ -43,7 +44,9 @@ export default function EditTable<T extends { id: string }>({
             <tr key={r.id}>
               {columns.map((c) => (
                 <td key={c.key} style={c.width ? { minWidth: c.width } : undefined}>
-                  {c.type === "number" ? (
+                  {c.type === "money" ? (
+                    <MoneyNum value={r[c.key] as number} onChange={(v) => set(r.id, c.key, v)} />
+                  ) : c.type === "number" ? (
                     <Num value={r[c.key] as number} onChange={(v) => set(r.id, c.key, v)} />
                   ) : c.type === "select" ? (
                     <select value={String(r[c.key] ?? "")} onChange={(e) => set(r.id, c.key, e.target.value || null)}>
