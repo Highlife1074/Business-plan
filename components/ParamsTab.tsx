@@ -2,7 +2,7 @@
 
 import EditTable from "./EditTable";
 import ScenarioBar from "./ScenarioBar";
-import { MoneyNum, useMoney } from "./CurrencyProvider";
+import { MoneyNum, RateStatus, useMoney } from "./CurrencyProvider";
 import { Num } from "./ui";
 import type { TabProps } from "./tab";
 import type { FixedCost, Investment, Loan, Params, RevenueStream, StaffLine } from "@/lib/types";
@@ -58,7 +58,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           </label>
           <label className="field">
             Devise des montants
-            <select value={dc} onChange={(e) => money_.setDisplay(e.target.value)}>
+            <select value={money_.requested} onChange={(e) => money_.setDisplay(e.target.value)}>
               {money_.options.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.code} — {c.label}
@@ -78,6 +78,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
             </label>
           ))}
         </div>
+        <RateStatus />
       </div>
 
       <div className="card">
