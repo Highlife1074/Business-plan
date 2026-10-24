@@ -17,7 +17,7 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 | **SWOT & risques** | Forces, faiblesses, opportunités, menaces, matrice des risques avec mitigation, marché, hypothèses clés |
 | **Devis** | Devis à obtenir, enregistrement des offres reçues, comparatif. Un devis **retenu** lié à une ligne du plan remplace automatiquement son montant dans tous les calculs |
 | **Démarches** | Agent fournisseurs : Claude cherche des fournisseurs (recherche web) pour chaque devis à obtenir, rédige les demandes de devis dans la langue du pays, vous validez puis l'e-mail part depuis votre Gmail ; les réponses sont relevées, analysées par Claude et enregistrables comme devis ; relances proposées après le délai choisi |
-| **Assistant Claude** | Conversation avec Claude, qui voit toutes les hypothèses et les résultats calculés |
+| **Assistant Claude** | Conversation avec Claude, qui voit toutes les hypothèses et les résultats calculés, et **modifie directement le plan** à votre demande (« baisse le loyer de 10 % », « ajoute un salarié au mois 6 »…) : valeurs, lignes, textes, juridique, risques ; chaque modification est listée dans la conversation et annulable |
 
 Le **convertisseur de devises**, en haut de chaque plan, affiche tous les rapports (sommaire, résultats, trésorerie, point mort)
 dans la devise de votre choix au taux du jour (sources essayées dans l'ordre : open.er-api.com, frankfurter.app (BCE), `currency-api` via jsDelivr puis pages.dev ; taux mis en cache 12 h ; si aucune n'est joignable, un **taux manuel** peut être saisi, et le bouton « Ajuster le taux » permet de le forcer).

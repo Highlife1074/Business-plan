@@ -16,6 +16,7 @@ import {
 import type { ChatMessage, Plan } from "./types";
 import { cloudSaveSettings } from "./firebase";
 import { currentUid } from "./storage";
+import { SECTIONS, type PlanChange } from "./plan-edit";
 
 // L'app est hébergée en pages statiques (GitHub Pages) : Claude est appelé directement
 // depuis le navigateur, avec la clé API saisie par l'utilisateur. La clé est conservée dans
@@ -156,29 +157,104 @@ export async function generatePlan(req: GenerateRequest, onProgress: (chars: num
   }
 }
 
-// Assistant : répond à une question en tenant compte du contexte du plan.
+// Outil donné à l'assistant pour modifier directement le plan
+const EDIT_TOOL: Anthropic.Beta.BetaTool = {
+  name: "modifier_plan",
+  description: `Modifie directement le business plan dans l'application (hypothèses, lignes de CA, charges, personnel, investissements, prêts, financement, saisonnalité, scénario, textes, juridique, risques, devis à obtenir). Tous les calculs sont mis à jour automatiquement.
+Sections et champs :
+- general (modifier) : startDate "AAAA-MM", horizonYears, vatRatePct, corporateTaxPct, employerChargesPct, inflationPct, discountRatePct, rampUpMonths, rampUpStartPct
+- projet (modifier) : name, description, city
+- saisonnalite (modifier) : clés "1" à "12" (mois) → coefficient
+- financement (modifier) : equity, subsidies
+- scenario (modifier) : volumePct, pricePct, costPct
+- textes (modifier) : summary, market, strengths[], weaknesses[], opportunities[], threats[], keyAssumptions[]
+- revenus (ajouter/modifier/supprimer) : label, unitLabel, unitPrice, unitsPerDay, openDaysPerMonth, variableCostPct, growthPct, note
+- charges_fixes : label, monthly, note
+- personnel : role, count, grossMonthly, startMonth
+- investissements : label, amount, depreciationYears, note
+- prets : label, amount, ratePct, years, deferralMonths
+- juridique : title, content
+- risques : risk, probability, impact ("faible"|"moyen"|"élevé"), mitigation
+- devis_a_obtenir : item, category, estimatedAmount
+Pour modifier ou supprimer une ligne, indique son "id" (fourni dans les données du plan). Les montants sont dans la devise du plan, hors taxes.`,
+  input_schema: {
+    type: "object",
+    required: ["changes"],
+    properties: {
+      changes: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["action", "section"],
+          properties: {
+            action: { type: "string", enum: ["modifier", "ajouter", "supprimer"] },
+            section: { type: "string", enum: Object.keys(SECTIONS) },
+            id: { type: "string", description: "Identifiant de la ligne (sections en liste)" },
+            valeurs: { type: "object", description: "Champs à écrire et leurs nouvelles valeurs" },
+          },
+        },
+      },
+    },
+  },
+};
+
+const EditInput = z.object({
+  changes: z.array(
+    z.object({
+      action: z.enum(["modifier", "ajouter", "supprimer"]),
+      section: z.string(),
+      id: z.string().optional(),
+      valeurs: z.record(z.string(), z.unknown()).optional(),
+    }),
+  ),
+});
+
+// Assistant : répond aux questions sur le plan et peut le modifier avec l'outil modifier_plan.
+// onEdit applique les modifications et renvoie le journal (et les erreurs) transmis à Claude.
 export async function askClaude(
   context: string,
   messages: ChatMessage[],
   onText: (delta: string) => void,
+  onEdit: (changes: PlanChange[]) => { log: string[]; errors: string[] },
 ): Promise<void> {
-  const stream = client().beta.messages.stream({
-    model: MODEL,
-    max_tokens: 16000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    thinking: { type: "adaptive" },
-    output_config: { effort: "medium" },
-    system: [
-      { type: "text", text: ASK_SYSTEM },
-      { type: "text", text: `Données du business plan :\n${context}` },
-    ],
-    messages: messages.map((m) => ({ role: m.role, content: m.content })),
-  });
-  stream.on("text", onText);
+  const history: Anthropic.Beta.BetaMessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
   try {
-    const message = await stream.finalMessage();
-    if (message.stop_reason === "refusal") throw new Error("Claude a refusé de répondre à cette demande.");
+    for (let turn = 0; turn < 6; turn++) {
+      const stream = client().beta.messages.stream({
+        model: MODEL,
+        max_tokens: 16000,
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+        thinking: { type: "adaptive" },
+        output_config: { effort: "medium" },
+        system: [
+          { type: "text", text: ASK_SYSTEM },
+          { type: "text", text: `Données du business plan :\n${context}` },
+        ],
+        tools: [EDIT_TOOL],
+        messages: history,
+      });
+      if (turn > 0) onText("\n\n");
+      stream.on("text", onText);
+      const message = await stream.finalMessage();
+      if (message.stop_reason === "refusal") throw new Error("Claude a refusé de répondre à cette demande.");
+      const calls = message.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
+      if (message.stop_reason !== "tool_use" || calls.length === 0) return;
+      history.push({ role: "assistant", content: message.content });
+      const results: Anthropic.Beta.BetaToolResultBlockParam[] = calls.map((call) => {
+        const parsed = EditInput.safeParse(call.input);
+        if (call.name !== EDIT_TOOL.name || !parsed.success) {
+          return { type: "tool_result", tool_use_id: call.id, is_error: true, content: "Paramètres de l'outil invalides." };
+        }
+        const { log, errors } = onEdit(parsed.data.changes);
+        const content = [
+          log.length ? `Modifications appliquées :\n- ${log.join("\n- ")}` : "Aucune modification appliquée.",
+          errors.length ? `Erreurs :\n- ${errors.join("\n- ")}` : "",
+        ].filter(Boolean).join("\n\n");
+        return { type: "tool_result", tool_use_id: call.id, is_error: log.length === 0 && errors.length > 0, content };
+      });
+      history.push({ role: "user", content: results });
+    }
   } catch (err) {
     throw new Error(apiErrorMessage(err));
   }
