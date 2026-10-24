@@ -346,7 +346,7 @@ function SupplierRow({
   onAnalyze: (o: Outreach) => void;
   onSaveQuote: (o: Outreach) => void;
 }) {
-  const { fmt } = useMoney();
+  const { fmt, ct } = useMoney();
   const due = o ? followUpDue(o, plan.sender) : false;
   const editing = o && o.draft.trim() !== "";
   const drafting = Boolean(busy[`draft-${s.id}`]);
@@ -364,7 +364,7 @@ function SupplierRow({
             {[s.city, s.phone].filter(Boolean).join(" · ")}
             {site && <> · <a href={site} target="_blank" rel="noreferrer">site</a></>}
           </div>
-          {s.notes && <div className="small">{s.notes}</div>}
+          {s.notes && <div className="small">{ct(s.notes)}</div>}
         </div>
         <button className="btn sm" title="Retirer" onClick={onRemove}>✕</button>
       </div>
@@ -400,15 +400,15 @@ function SupplierRow({
       {o?.analysis && (
         <div className="alert good" style={{ marginTop: 8 }}>
           <strong>Analyse de la réponse</strong>
-          <p className="small" style={{ margin: "4px 0" }}>{o.analysis.summary}</p>
+          <p className="small" style={{ margin: "4px 0" }}>{ct(o.analysis.summary)}</p>
           {o.analysis.hasQuote && (
             <p className="small" style={{ margin: "4px 0" }}>
               Montant : <strong>{fmt(o.analysis.amount)}</strong> HT ({o.analysis.kind})
               {o.analysis.linkedId && <> · ligne : {[...plan.params.investments, ...plan.params.fixedCosts].find((l) => l.id === o.analysis!.linkedId)?.label}</>}
             </p>
           )}
-          {o.analysis.conditions && <p className="small muted" style={{ margin: "4px 0" }}>{o.analysis.conditions}</p>}
-          <p className="small" style={{ margin: "4px 0" }}>➜ {o.analysis.nextStep}</p>
+          {o.analysis.conditions && <p className="small muted" style={{ margin: "4px 0" }}>{ct(o.analysis.conditions)}</p>}
+          <p className="small" style={{ margin: "4px 0" }}>➜ {ct(o.analysis.nextStep)}</p>
           {o.analysis.hasQuote && o.status !== "devis enregistré" && (
             <button className="btn sm primary" onClick={() => onSaveQuote(o)}>Enregistrer comme devis</button>
           )}

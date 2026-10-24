@@ -1,7 +1,7 @@
 "use client";
 
 import { Num } from "./ui";
-import { MoneyNum } from "./CurrencyProvider";
+import { MoneyNum, useMoney } from "./CurrencyProvider";
 import { uid } from "@/lib/uid";
 
 export interface Column<T> {
@@ -53,7 +53,7 @@ export default function EditTable<T extends { id: string }>({
                       {c.options!.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   ) : (
-                    <input value={String(r[c.key] ?? "")} onChange={(e) => set(r.id, c.key, e.target.value)} />
+                    <TextCell value={String(r[c.key] ?? "")} onChange={(v) => set(r.id, c.key, v)} />
                   )}
                 </td>
               ))}
@@ -73,4 +73,15 @@ export default function EditTable<T extends { id: string }>({
       </button>
     </div>
   );
+}
+
+// Cellule texte : si elle contient des montants et qu'une autre devise est affichée,
+// elle les montre convertis (lecture seule) ; sinon elle reste modifiable.
+function TextCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { converted, ct, base } = useMoney();
+  const shown = converted ? ct(value) : value;
+  if (shown !== value) {
+    return <div className="converted-text small" title={`Montants convertis — repassez en ${base} pour modifier`}>{shown}</div>;
+  }
+  return <input value={value} onChange={(e) => onChange(e.target.value)} />;
 }

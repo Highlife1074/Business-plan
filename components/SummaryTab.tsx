@@ -12,7 +12,7 @@ import { monthName, num, pct } from "@/lib/format";
 
 export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) {
   const cur = plan.meta.currency;
-  const { fmt } = useMoney();
+  const { fmt, ct, converted, base } = useMoney();
   const m = (v: number) => fmt(v);
   const mc = (v: number) => fmt(v, true);
   const ind = proj.indicators;
@@ -46,7 +46,7 @@ export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) 
   return (
     <>
       <div className="card">
-        <p>{plan.meta.description}</p>
+        <p>{ct(plan.meta.description)}</p>
         {alerts.map((a, i) => <div key={i} className={`alert ${a.tone}`}>{a.text}</div>)}
       </div>
 
@@ -105,7 +105,7 @@ export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) 
         <div className="row" style={{ justifyContent: "space-between" }}>
           <h2>Synthèse</h2>
           <div className="row no-print">
-            <button className="btn sm" onClick={() => setEditing(!editing)}>{editing ? "Terminer" : "Modifier"}</button>
+            <button className="btn sm" disabled={converted && !editing} title={converted ? `Repassez en ${base} pour modifier le texte` : undefined} onClick={() => setEditing(!editing)}>{editing ? "Terminer" : "Modifier"}</button>
             <button className="btn sm" onClick={() => askClaude("Relis le plan avec les chiffres actuels et propose une synthèse exécutive mise à jour, prête à être présentée à une banque.")}>
               Réécrire avec Claude
             </button>
@@ -118,7 +118,7 @@ export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) 
             onChange={(e) => update((p) => ({ ...p, texts: { ...p.texts, summary: e.target.value } }))}
           />
         ) : (
-          plan.texts.summary.split(/\n\s*\n/).map((para, i) => <p key={i}>{para}</p>)
+          ct(plan.texts.summary).split(/\n\s*\n/).map((para, i) => <p key={i}>{para}</p>)
         )}
       </div>
 
@@ -150,7 +150,7 @@ export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) 
         ].map((b) => (
           <div className="card" key={b.t}>
             <h3 className={b.cls}>{b.t}</h3>
-            <ul>{b.items.slice(0, 4).map((x, i) => <li key={i}>{x}</li>)}</ul>
+            <ul>{b.items.slice(0, 4).map((x, i) => <li key={i}>{ct(x)}</li>)}</ul>
           </div>
         ))}
       </div>

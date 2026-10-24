@@ -1,20 +1,28 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { CURRENCIES, convertPlan, fetchRates } from "@/lib/currency";
+import { CURRENCIES, convertPlan, convertText, fetchRates } from "@/lib/currency";
 import { money, num } from "@/lib/format";
 import { Num } from "./ui";
 import type { Plan } from "@/lib/types";
 
-// Devise d'affichage d'un plan : les montants restent saisis et calculés dans la devise du plan,
-// et sont convertis à l'affichage avec le taux du jour.
+// Devise d'affichage d'un plan : les montants restent enregistrés et calculés dans la devise du plan,
+// et sont convertis à l'affichage (chiffres, champs de saisie et montants écrits dans les textes)
+// avec le taux du jour.
 interface CurrencyState {
   base: string;
-  display: string;
+  display: string; // devise effectivement affichée (taux disponible)
+  requested: string; // devise choisie (en attente du taux le cas échéant)
+  converted: boolean; // affichage dans une autre devise que celle du plan
   rate: number; // 1 base = rate display
+  rateDate: string;
+  loading: boolean;
+  error: string;
   fmt: (v: number, compact?: boolean) => string; // montant converti
   fmtBase: (v: number, compact?: boolean) => string; // montant dans la devise du plan
+  ct: (text: string) => string; // texte dont les montants sont convertis
   setDisplay: (code: string) => void;
+  convertForGood: () => void;
   options: { code: string; label: string }[];
 }
 
@@ -33,6 +41,35 @@ export function MoneyNum({ value, onChange }: { value: number; onChange: (v: num
   return <Num value={Math.round(value * rate * 100) / 100} onChange={(v) => onChange(v / rate)} />;
 }
 
+// Texte libre : s'il contient des montants et qu'une autre devise est affichée, il les montre
+// convertis (lecture seule, à modifier dans la devise du plan) ; sinon il reste modifiable.
+export function ConvertibleText({
+  value,
+  onChange,
+  rows = 4,
+  multiline = true,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  multiline?: boolean;
+}) {
+  const { converted, ct, base } = useMoney();
+  const shown = converted ? ct(value) : value;
+  if (shown !== value) {
+    return (
+      <div className="converted-text" title={`Montants convertis — repassez en ${base} pour modifier ce texte`}>
+        {shown}
+      </div>
+    );
+  }
+  return multiline ? (
+    <textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} />
+  ) : (
+    <input value={value} onChange={(e) => onChange(e.target.value)} />
+  );
+}
+
 export default function CurrencyProvider({
   plan,
   update,
@@ -44,22 +81,21 @@ export default function CurrencyProvider({
 }) {
   const base = plan.meta.currency;
   const storeKey = `bp-sim:display:${plan.id}`;
-  const [display, setDisplayState] = useState(base);
+  const [requested, setRequested] = useState(base);
   const [rates, setRates] = useState<{ date: string; rates: Record<string, number> } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(storeKey);
-      setDisplayState(saved || base);
+      setRequested(localStorage.getItem(storeKey) || base);
     } catch {
-      setDisplayState(base);
+      setRequested(base);
     }
   }, [storeKey, base]);
 
   useEffect(() => {
-    if (display === base) return;
+    if (requested === base) return;
     let cancelled = false;
     setLoading(true);
     setError("");
@@ -76,34 +112,24 @@ export default function CurrencyProvider({
     return () => {
       cancelled = true;
     };
-  }, [base, display]);
+  }, [base, requested]);
 
   const setDisplay = (code: string) => {
-    setDisplayState(code);
+    setRequested(code);
     try {
       if (code === base) localStorage.removeItem(storeKey);
       else localStorage.setItem(storeKey, code);
     } catch {}
   };
 
-  const found = display !== base ? rates?.rates[display] : 1;
-  const active = display !== base && typeof found === "number" && found > 0;
-  const rate = active ? found! : 1;
-  const shown = active ? display : base;
-  const options = CURRENCIES.some((c) => c.code === base) ? CURRENCIES : [{ code: base, label: base }, ...CURRENCIES];
-  const value: CurrencyState = {
-    base,
-    display: shown,
-    rate,
-    fmt: (v, compact) => money(v * rate, shown, compact),
-    fmtBase: (v, compact) => money(v, base, compact),
-    setDisplay,
-    options,
-  };
-
+  const found = requested !== base ? rates?.rates[requested] : 1;
+  const converted = requested !== base && typeof found === "number" && found > 0;
+  const rate = converted ? found! : 1;
+  const display = converted ? requested : base;
+  const fmt = (v: number, compact?: boolean) => money(v * rate, display, compact);
 
   function convertForGood() {
-    if (!active) return;
+    if (!converted) return;
     if (!confirm(`Convertir définitivement tous les montants du plan de ${base} en ${display} (1 ${base} = ${num(rate, 4)} ${display}) ?\n\nPrix, charges, salaires, investissements, financement et devis seront recalculés.`)) return;
     update((p) => convertPlan(p, display, rate));
     try {
@@ -111,41 +137,66 @@ export default function CurrencyProvider({
     } catch {}
   }
 
+  const value: CurrencyState = {
+    base,
+    display,
+    requested,
+    converted,
+    rate,
+    rateDate: rates?.date ?? "",
+    loading,
+    error,
+    fmt,
+    fmtBase: (v, compact) => money(v, base, compact),
+    ct: (text) => (converted ? convertText(text, base, display, rate, (v, compact) => money(v, display, compact)) : text),
+    setDisplay,
+    convertForGood,
+    options: CURRENCIES.some((c) => c.code === base) ? CURRENCIES : [{ code: base, label: base }, ...CURRENCIES],
+  };
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+// Barre de choix de la devise, affichée en haut de chaque plan
+export function CurrencyBar() {
+  const c = useMoney();
   return (
-    <Ctx.Provider value={value}>
-      <div className="card no-print" style={{ padding: "10px 16px" }}>
-        <div className="row" style={{ justifyContent: "space-between" }}>
-          <label className="row small" style={{ gap: 6, flexWrap: "nowrap" }}>
-            <span className="muted">Afficher les montants en</span>
-            <select style={{ width: "auto" }} value={display} onChange={(e) => setDisplay(e.target.value)}>
-              {options.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code} — {c.label}
-                  {c.code === base ? " (devise du plan)" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          {active && (
-            <button className="btn sm" onClick={convertForGood}>Convertir le plan en {display}</button>
-          )}
-        </div>
-        {display !== base && (
-          <p className="small" style={{ margin: "6px 0 0" }}>
-            {loading ? (
-              <span className="muted"><span className="spinner" /> Récupération du taux…</span>
-            ) : active ? (
-              <span className="muted">
-                1 {base} = <strong>{num(rate, 4)} {display}</strong> (taux du {rates?.date}). Tous les montants, saisies
-                comprises, sont affichés en {display} ; le plan reste enregistré en {base}.
-              </span>
-            ) : (
-              <span className="neg">{error || `Taux ${base} → ${display} indisponible.`}</span>
-            )}
-          </p>
+    <div className="card no-print" style={{ padding: "10px 16px" }}>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <label className="row small" style={{ gap: 6, flexWrap: "nowrap" }}>
+          <span className="muted">Afficher les montants en</span>
+          <select style={{ width: "auto" }} value={c.requested} onChange={(e) => c.setDisplay(e.target.value)}>
+            {c.options.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.code} — {o.label}
+                {o.code === c.base ? " (devise du plan)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        {c.converted && (
+          <button className="btn sm" onClick={c.convertForGood}>Convertir le plan en {c.display}</button>
         )}
       </div>
-      {children}
-    </Ctx.Provider>
+      {c.requested !== c.base && (
+        <p className="small" style={{ margin: "6px 0 0" }}>
+          {c.loading ? (
+            <span className="muted"><span className="spinner" /> Récupération du taux…</span>
+          ) : c.converted ? (
+            <span className="muted">
+              1 {c.base} = <strong>{num(c.rate, 4)} {c.display}</strong> (taux du {c.rateDate}). Tous les montants (chiffres,
+              saisies et textes) sont affichés en {c.display}. Les textes se modifient dans la devise du plan.
+            </span>
+          ) : (
+            <span className="neg">{c.error || `Taux ${c.base} → ${c.requested} indisponible.`}</span>
+          )}
+        </p>
+      )}
+    </div>
   );
+}
+
+// Devise affichée, pour les libellés (« montants HT en EUR »)
+export function DisplayCurrency() {
+  return <>{useMoney().display}</>;
 }

@@ -2,6 +2,7 @@
 
 import EditTable from "./EditTable";
 import { StringList } from "./ui";
+import { ConvertibleText, useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { Risk, Texts } from "@/lib/types";
 
@@ -36,7 +37,7 @@ export default function SwotTab({ plan, update, askClaude }: TabProps) {
         {blocks.map((b) => (
           <div className="card" key={b.key}>
             <h3 className={b.cls}>{b.title}</h3>
-            <StringList items={t[b.key]} onChange={(items) => setT({ [b.key]: items })} />
+            <Items items={t[b.key]} onChange={(items) => setT({ [b.key]: items })} />
           </div>
         ))}
       </div>
@@ -67,13 +68,24 @@ export default function SwotTab({ plan, update, askClaude }: TabProps) {
 
       <div className="card">
         <h2>Marché et concurrence</h2>
-        <textarea rows={6} value={t.market} onChange={(e) => setT({ market: e.target.value })} />
+        <ConvertibleText rows={6} value={t.market} onChange={(market) => setT({ market })} />
       </div>
 
       <div className="card">
         <h2>Hypothèses clés</h2>
-        <StringList items={t.keyAssumptions} onChange={(keyAssumptions) => setT({ keyAssumptions })} />
+        <Items items={t.keyAssumptions} onChange={(keyAssumptions) => setT({ keyAssumptions })} />
       </div>
     </>
+  );
+}
+
+// Liste modifiable dans la devise du plan ; en lecture seule avec les montants convertis sinon
+function Items({ items, onChange }: { items: string[]; onChange: (items: string[]) => void }) {
+  const { converted, ct, base } = useMoney();
+  if (!converted || items.every((x) => ct(x) === x)) return <StringList items={items} onChange={onChange} />;
+  return (
+    <ul title={`Montants convertis — repassez en ${base} pour modifier`}>
+      {items.map((x, i) => <li key={i}>{ct(x)}</li>)}
+    </ul>
   );
 }

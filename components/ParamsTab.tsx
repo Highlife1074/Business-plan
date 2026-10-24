@@ -43,7 +43,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
       <div className="card">
         <p className="muted small" style={{ margin: 0 }}>
           Toutes les hypothèses du plan sont ici. Chaque modification met à jour immédiatement le sommaire, les résultats,
-          la trésorerie et le point mort. Montants hors taxes, en {cur}.
+          la trésorerie et le point mort. Montants hors taxes, en {dc}.
         </p>
       </div>
 

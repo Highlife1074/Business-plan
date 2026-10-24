@@ -5,6 +5,8 @@ import type { TabProps } from "./tab";
 import type { ChatMessage } from "@/lib/types";
 import { planContext } from "@/lib/context";
 import { askClaude } from "@/lib/claude";
+import { useMoney } from "./CurrencyProvider";
+import { num } from "@/lib/format";
 
 const SUGGESTIONS = [
   "Quels sont les 3 points faibles de ce plan aux yeux d'un banquier ?",
@@ -21,6 +23,12 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
   const endRef = useRef<HTMLDivElement>(null);
   const handled = useRef<string | null>(null);
 
+  const { ct, converted, base, display, rate } = useMoney();
+  // Devise d'affichage choisie : Claude donne alors ses montants dans cette devise
+  const currencyNote = converted
+    ? `\n\nL'utilisateur affiche les montants en ${display} (1 ${base} = ${num(rate, 4)} ${display}) : exprime les montants en ${display}, avec l'équivalent en ${base} entre parenthèses.`
+    : "";
+
   async function send(question: string) {
     const q = question.trim();
     if (!q || busy) return;
@@ -32,7 +40,7 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
     setStreaming("");
     let answer = "";
     try {
-      await askClaude(planContext(plan, proj), history, (delta) => {
+      await askClaude(planContext(plan, proj) + currencyNote, history, (delta) => {
         answer += delta;
         setStreaming(answer);
       });
@@ -72,8 +80,8 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
         dans l&apos;onglet Paramètres pour mettre à jour le plan.
       </p>
       <div className="chat">
-        {plan.chat.map((msg, i) => <div key={i} className={`msg ${msg.role}`}>{msg.content}</div>)}
-        {busy && <div className="msg assistant">{streaming || <span className="spinner" />}</div>}
+        {plan.chat.map((msg, i) => <div key={i} className={`msg ${msg.role}`}>{ct(msg.content)}</div>)}
+        {busy && <div className="msg assistant">{ct(streaming) || <span className="spinner" />}</div>}
         <div ref={endRef} />
       </div>
       {error && <p className="neg">{error}</p>}
