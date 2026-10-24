@@ -32,7 +32,7 @@ export default function EditTable<T extends { id: string }>({
     onChange(rows.map((r) => (r.id === id ? { ...r, [key]: value } : r)));
   return (
     <div className="table-wrap">
-      <table className="edit">
+      <table className="edit cards">
         <thead>
           <tr>
             {columns.map((c) => <th key={c.key}>{c.label}</th>)}
@@ -43,7 +43,7 @@ export default function EditTable<T extends { id: string }>({
           {rows.map((r) => (
             <tr key={r.id}>
               {columns.map((c) => (
-                <td key={c.key} style={c.width ? { minWidth: c.width } : undefined}>
+                <td key={c.key} data-label={c.label} style={c.width ? { minWidth: c.width } : undefined}>
                   {c.type === "money" ? (
                     <MoneyNum value={r[c.key] as number} onChange={(v) => set(r.id, c.key, v)} />
                   ) : c.type === "number" ? (
@@ -57,7 +57,7 @@ export default function EditTable<T extends { id: string }>({
                   )}
                 </td>
               ))}
-              <td>
+              <td className="actions">
                 <div className="row" style={{ flexWrap: "nowrap" }}>
                   {rowExtra?.(r)}
                   <button className="btn sm" title="Supprimer" onClick={() => onChange(rows.filter((x) => x.id !== r.id))}>✕</button>

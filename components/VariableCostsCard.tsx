@@ -50,7 +50,7 @@ export default function VariableCostsCard({
         vendue (matières premières, emballages, consommables…), pour toutes les lignes de CA ou une seule.
       </p>
       <div className="table-wrap">
-        <table className="edit">
+        <table className="edit cards">
           <thead>
             <tr>
               <th>Charge</th>
@@ -65,14 +65,14 @@ export default function VariableCostsCard({
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td><input value={r.label} onChange={(e) => set(r.id, { label: e.target.value })} /></td>
-                <td>
+                <td data-label="Charge"><input value={r.label} onChange={(e) => set(r.id, { label: e.target.value })} /></td>
+                <td data-label="Calcul">
                   <select value={r.mode} onChange={(e) => set(r.id, { mode: e.target.value as VariableCost["mode"] })}>
                     <option value="pct">% du CA</option>
                     <option value="unit">par unité vendue</option>
                   </select>
                 </td>
-                <td style={{ minWidth: 120 }}>
+                <td data-label="Valeur" style={{ minWidth: 120 }}>
                   {r.mode === "pct" ? (
                     <div className="row" style={{ flexWrap: "nowrap", gap: 4 }}>
                       <Num value={r.value} onChange={(v) => set(r.id, { value: v })} /> <span className="muted">%</span>
@@ -83,15 +83,15 @@ export default function VariableCostsCard({
                     </div>
                   )}
                 </td>
-                <td>
+                <td data-label="S'applique à">
                   <select value={r.streamId ?? ""} onChange={(e) => set(r.id, { streamId: e.target.value || null })}>
                     <option value="">Toutes les lignes</option>
                     {streams.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
                 </td>
-                <td>{fmt(monthly(r))}</td>
-                <td style={{ minWidth: 180 }}><input value={r.note} onChange={(e) => set(r.id, { note: e.target.value })} /></td>
-                <td>
+                <td data-label="≈ / mois">{fmt(monthly(r))}</td>
+                <td data-label="Note" style={{ minWidth: 180 }}><input value={r.note} onChange={(e) => set(r.id, { note: e.target.value })} /></td>
+                <td className="actions">
                   <button className="btn sm" title="Supprimer" onClick={() => setRows(rows.filter((x) => x.id !== r.id))}>✕</button>
                 </td>
               </tr>

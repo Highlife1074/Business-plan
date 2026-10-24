@@ -41,11 +41,16 @@ export default function ScenarioBar({ plan, update }: Pick<TabProps, "plan" | "u
           ))}
         </div>
       </div>
-      <div className="row" style={{ gap: 16 }}>
-        {slider("volumePct", "Volumes", 50, 150)}
-        {slider("pricePct", "Prix", 70, 130)}
-        {slider("costPct", "Coûts", 70, 130)}
-      </div>
+      <details className="scenario-sliders" open={!active || undefined}>
+        <summary className="small muted">
+          Ajuster finement (volumes {sc.volumePct} % · prix {sc.pricePct} % · coûts {sc.costPct} %)
+        </summary>
+        <div className="row" style={{ gap: 16, marginTop: 8 }}>
+          {slider("volumePct", "Volumes", 50, 150)}
+          {slider("pricePct", "Prix", 70, 130)}
+          {slider("costPct", "Coûts", 70, 130)}
+        </div>
+      </details>
     </div>
   );
 }
