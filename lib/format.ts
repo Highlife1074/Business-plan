@@ -4,6 +4,7 @@ export function money(value: number, currency: string, compact = false): string 
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency,
+      minimumFractionDigits: 0,
       maximumFractionDigits: compact ? 1 : 0,
       notation: compact ? "compact" : "standard",
     }).format(value);

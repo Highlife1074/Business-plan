@@ -17,7 +17,7 @@ import AssistantTab from "@/components/AssistantTab";
 import OutreachTab from "@/components/OutreachTab";
 import type { TabProps } from "@/components/tab";
 import { useCloud } from "@/components/CloudProvider";
-import CurrencyProvider from "@/components/CurrencyProvider";
+import CurrencyProvider, { CurrencyBar, DisplayCurrency } from "@/components/CurrencyProvider";
 
 const TABS = [
   { id: "summary", label: "Sommaire", C: SummaryTab },
@@ -104,13 +104,14 @@ export default function PlanView({ id }: { id: string }) {
   const Current = TABS.find((t) => t.id === tab)!.C;
 
   return (
+    <CurrencyProvider plan={plan} update={update}>
     <main className="container">
       <div className="header">
         <Link className="btn sm no-print" href="/">← Mes plans</Link>
         <div className="grow">
           <h1 style={{ marginBottom: 2 }}>{plan.meta.name}</h1>
           <div className="muted small">
-            {plan.meta.businessType} · {[plan.meta.city, plan.meta.country].filter(Boolean).join(", ")} · montants HT en {plan.meta.currency}
+            {plan.meta.businessType} · {[plan.meta.city, plan.meta.country].filter(Boolean).join(", ")} · montants HT en <DisplayCurrency />
           </div>
         </div>
         <div className="row no-print">
@@ -125,9 +126,9 @@ export default function PlanView({ id }: { id: string }) {
           </button>
         ))}
       </nav>
-      <CurrencyProvider plan={plan} update={update}>
-        <Current {...props} />
-      </CurrencyProvider>
+      <CurrencyBar />
+      <Current {...props} />
     </main>
+    </CurrencyProvider>
   );
 }

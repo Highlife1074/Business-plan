@@ -92,3 +92,74 @@ export async function fetchRates(base: string): Promise<Rates> {
   } catch {}
   return result;
 }
+
+// --- Conversion des montants écrits dans les textes (synthèse, juridique, réponses de Claude…) ---
+
+// Écritures possibles d'une devise : code ISO et symboles usuels (ex. PLN, zł ; EUR, € ; USD, $, US$)
+export function currencyTokens(code: string): string[] {
+  const tokens = new Set<string>([code]);
+  for (const display of ["symbol", "narrowSymbol"] as const) {
+    for (const locale of ["fr-FR", "en-US"]) {
+      try {
+        const part = new Intl.NumberFormat(locale, { style: "currency", currency: code, currencyDisplay: display })
+          .formatToParts(1)
+          .find((p) => p.type === "currency");
+        if (part?.value) tokens.add(part.value);
+      } catch {}
+    }
+  }
+  return [...tokens].sort((a, b) => b.length - a.length);
+}
+
+const MULT: Record<string, number> = { k: 1e3, K: 1e3, M: 1e6, Md: 1e9, Mds: 1e9, Mrd: 1e9 };
+const MULT_WORDS: [RegExp, number][] = [
+  [/^(?:milliards?|mds?)$/i, 1e9],
+  [/^millions?$/i, 1e6],
+  [/^(?:milliers?|mille)$/i, 1e3],
+];
+
+function parseAmount(raw: string, hasMultiplier: boolean): number | null {
+  let s = raw.replace(/[\s  ]/g, "");
+  if (!/\d/.test(s)) return null;
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  if (lastComma >= 0 && lastDot >= 0) {
+    // le dernier séparateur est le séparateur décimal
+    const dec = lastComma > lastDot ? "," : ".";
+    const thousands = dec === "," ? "." : ",";
+    s = s.split(thousands).join("").replace(dec, ".");
+  } else if (lastComma >= 0) {
+    // « 1,88 » → décimal ; « 1,200,000 » → milliers (sauf devant un multiplicateur : « 1,250 M »)
+    s = !hasMultiplier && /^\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  } else if (lastDot >= 0) {
+    s = !hasMultiplier && /^\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "") : s;
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Remplace chaque montant exprimé dans la devise `base` par son équivalent dans `display`.
+export function convertText(text: string, base: string, display: string, rate: number, format: (v: number, compact: boolean) => string): string {
+  if (!text || base === display || !(rate > 0)) return text;
+  const cur = currencyTokens(base).map(escapeRe).join("|");
+  const num = String.raw`\d[\d\s  .,]*\d|\d`;
+  const mult = String.raw`(?:k|K|Mds?|Mrd|M|milliards?|millions?|milliers?|mille)`;
+  const sp = String.raw`[\s  ]?`;
+  // « 1,88 M PLN », « 620 k PLN », « 5 000 PLN », « 2 millions de PLN »
+  const after = new RegExp(String.raw`(${num})(?:${sp}(${mult})\.?)?${sp}(?:de${sp}|d')?(${cur})(?![A-Za-z])`, "g");
+  // « PLN 5 000 », « zł 120 »
+  const before = new RegExp(String.raw`(?<![A-Za-z])(${cur})${sp}(${num})(?:${sp}(${mult})\b)?`, "g");
+  const convert = (rawNum: string, rawMult: string | undefined) => {
+    const factor = rawMult ? (MULT[rawMult.replace(/\.$/, "")] ?? MULT_WORDS.find(([re]) => re.test(rawMult))?.[1] ?? 1) : 1;
+    const value = parseAmount(rawNum, Boolean(rawMult));
+    if (value === null) return null;
+    return format(value * factor * rate, Boolean(rawMult) || value * factor >= 1e6);
+  };
+  return text
+    .replace(after, (whole, n: string, m: string | undefined) => convert(n, m) ?? whole)
+    .replace(before, (whole, _c: string, n: string, m: string | undefined) => convert(n, m) ?? whole);
+}

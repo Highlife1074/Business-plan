@@ -1,6 +1,7 @@
 "use client";
 
 import type { TabProps } from "./tab";
+import { ConvertibleText } from "./CurrencyProvider";
 import type { LegalItem } from "@/lib/types";
 import { uid } from "@/lib/uid";
 
@@ -30,20 +31,21 @@ export default function LegalTab({ plan, update, askClaude }: TabProps) {
       {items.map((it) => (
         <div className="card" key={it.id}>
           <div className="row" style={{ flexWrap: "nowrap", marginBottom: 8 }}>
-            <input
-              style={{ fontWeight: 600 }}
-              value={it.title}
-              onChange={(e) => setItems(items.map((x) => (x.id === it.id ? { ...x, title: e.target.value } : x)))}
-            />
+            <div style={{ flex: 1, fontWeight: 600 }}>
+              <ConvertibleText
+                multiline={false}
+                value={it.title}
+                onChange={(v) => setItems(items.map((x) => (x.id === it.id ? { ...x, title: v } : x)))}
+              />
+            </div>
             <button className="btn sm no-print" onClick={() => askClaude(`Détaille le point juridique « ${it.title} » pour mon projet à ${place} : obligations précises, coûts, délais et pièges à éviter.`)}>
               Approfondir
             </button>
             <button className="btn sm no-print" title="Supprimer" onClick={() => setItems(items.filter((x) => x.id !== it.id))}>✕</button>
           </div>
-          <textarea
-            rows={4}
+          <ConvertibleText
             value={it.content}
-            onChange={(e) => setItems(items.map((x) => (x.id === it.id ? { ...x, content: e.target.value } : x)))}
+            onChange={(v) => setItems(items.map((x) => (x.id === it.id ? { ...x, content: v } : x)))}
           />
         </div>
       ))}
