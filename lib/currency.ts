@@ -61,36 +61,91 @@ const CACHE = "bp-sim:rates:";
 const MAX_AGE = 12 * 60 * 60 * 1000;
 
 // Taux de change du jour (sources gratuites, sans clé), mis en cache 12 h dans le navigateur.
-export async function fetchRates(base: string): Promise<Rates> {
+async function getJson<T>(url: string, timeoutMs = 8000): Promise<T> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+const upper = (r: Record<string, number>) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k.toUpperCase(), v]));
+
+// Sources de taux essayées dans l'ordre (gratuites, sans clé, accessibles depuis le navigateur)
+const SOURCES: { name: string; load: (base: string) => Promise<Rates> }[] = [
+  {
+    name: "open.er-api.com",
+    load: async (base) => {
+      const d = await getJson<{ result?: string; time_last_update_utc?: string; rates?: Record<string, number> }>(
+        `https://open.er-api.com/v6/latest/${base}`,
+      );
+      if (d.result !== "success" || !d.rates) throw new Error("réponse invalide");
+      return { base, date: new Date(d.time_last_update_utc ?? Date.now()).toISOString().slice(0, 10), rates: d.rates };
+    },
+  },
+  {
+    name: "frankfurter.app (BCE)",
+    load: async (base) => {
+      const d = await getJson<{ date: string; rates: Record<string, number> }>(`https://api.frankfurter.app/latest?from=${base}`);
+      return { base, date: d.date, rates: d.rates };
+    },
+  },
+  ...[
+    `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/`,
+    `https://latest.currency-api.pages.dev/v1/currencies/`,
+  ].map((prefix) => ({
+    name: "currency-api",
+    load: async (base: string) => {
+      const d = await getJson<{ date: string } & Record<string, Record<string, number>>>(`${prefix}${base.toLowerCase()}.json`);
+      return { base, date: d.date, rates: upper(d[base.toLowerCase()] ?? {}) };
+    },
+  })),
+];
+
+// Taux de change du jour, mis en cache 12 h dans le navigateur. `need` : devise recherchée.
+export async function fetchRates(base: string, need?: string): Promise<Rates> {
   const key = CACHE + base;
   try {
     const cached = JSON.parse(localStorage.getItem(key) ?? "null") as (Rates & { at: number }) | null;
-    if (cached && Date.now() - cached.at < MAX_AGE) return cached;
+    if (cached && Date.now() - cached.at < MAX_AGE && (!need || cached.rates[need])) return cached;
   } catch {}
 
-  let result: Rates | null = null;
-  try {
-    const res = await fetch(`https://open.er-api.com/v6/latest/${base}`);
-    const d = (await res.json()) as { result?: string; time_last_update_utc?: string; rates?: Record<string, number> };
-    if (d.result === "success" && d.rates) {
-      result = { base, date: new Date(d.time_last_update_utc ?? Date.now()).toISOString().slice(0, 10), rates: d.rates };
+  const errors: string[] = [];
+  for (const source of SOURCES) {
+    try {
+      const result = await source.load(base);
+      if (need && !(result.rates[need] > 0)) throw new Error(`pas de taux ${need}`);
+      try {
+        localStorage.setItem(key, JSON.stringify({ ...result, at: Date.now() }));
+      } catch {}
+      return result;
+    } catch (err) {
+      errors.push(`${source.name} : ${err instanceof Error ? err.message : err}`);
     }
-  } catch {}
-  if (!result) {
-    const res = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${base.toLowerCase()}.min.json`);
-    if (!res.ok) throw new Error("Taux de change indisponibles (connexion ?)");
-    const d = (await res.json()) as { date: string } & Record<string, Record<string, number>>;
-    const lower = d[base.toLowerCase()] ?? {};
-    result = {
-      base,
-      date: d.date,
-      rates: Object.fromEntries(Object.entries(lower).map(([k, v]) => [k.toUpperCase(), v])),
-    };
   }
+  throw new Error(`Taux de change ${base} → ${need ?? "?"} introuvable (${errors.join(" ; ")}). Saisissez le taux manuellement.`);
+}
+
+// Taux saisi à la main (si aucune source n'est joignable), mémorisé par paire de devises
+export function manualRate(base: string, to: string): number | null {
   try {
-    localStorage.setItem(key, JSON.stringify({ ...result, at: Date.now() }));
+    const v = Number(localStorage.getItem(`bp-sim:manual-rate:${base}-${to}`));
+    return v > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setManualRate(base: string, to: string, rate: number | null) {
+  try {
+    const k = `bp-sim:manual-rate:${base}-${to}`;
+    if (rate && rate > 0) localStorage.setItem(k, String(rate));
+    else localStorage.removeItem(k);
   } catch {}
-  return result;
 }
 
 // --- Conversion des montants écrits dans les textes (synthèse, juridique, réponses de Claude…) ---

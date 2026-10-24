@@ -20,7 +20,7 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 | **Assistant Claude** | Conversation avec Claude, qui voit toutes les hypothèses et les résultats calculés |
 
 Le **convertisseur de devises**, en haut de chaque plan, affiche tous les rapports (sommaire, résultats, trésorerie, point mort)
-dans la devise de votre choix au taux du jour (sources : open.er-api.com, puis jsDelivr `currency-api` en secours ; taux mis en cache 12 h).
+dans la devise de votre choix au taux du jour (sources essayées dans l'ordre : open.er-api.com, frankfurter.app (BCE), `currency-api` via jsDelivr puis pages.dev ; taux mis en cache 12 h ; si aucune n'est joignable, un **taux manuel** peut être saisi, et le bouton « Ajuster le taux » permet de le forcer).
 Tous les montants suivent la devise choisie, **y compris les champs de saisie** (Paramètres, Devis) : un montant saisi en EUR
 est enregistré dans la devise du plan au taux du jour. Les **montants écrits dans les textes** (synthèse, juridique, marché, SWOT,
 notes, réponses de l'assistant, analyses des réponses fournisseurs) sont aussi convertis à l'affichage ; un texte contenant

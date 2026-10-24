@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { CURRENCIES, convertPlan, convertText, fetchRates } from "@/lib/currency";
+import { CURRENCIES, convertPlan, convertText, fetchRates, manualRate, setManualRate } from "@/lib/currency";
 import { money, num } from "@/lib/format";
 import { Num } from "./ui";
 import type { Plan } from "@/lib/types";
@@ -23,6 +23,8 @@ interface CurrencyState {
   ct: (text: string) => string; // texte dont les montants sont convertis
   setDisplay: (code: string) => void;
   convertForGood: () => void;
+  manual: number | null; // taux saisi à la main (prioritaire)
+  setManual: (rate: number | null) => void;
   options: { code: string; label: string }[];
 }
 
@@ -85,6 +87,7 @@ export default function CurrencyProvider({
   const [rates, setRates] = useState<{ date: string; rates: Record<string, number> } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [manual, setManualState] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -95,11 +98,15 @@ export default function CurrencyProvider({
   }, [storeKey, base]);
 
   useEffect(() => {
+    setManualState(requested === base ? null : manualRate(base, requested));
+  }, [base, requested]);
+
+  useEffect(() => {
     if (requested === base) return;
     let cancelled = false;
     setLoading(true);
     setError("");
-    fetchRates(base)
+    fetchRates(base, requested)
       .then((r) => {
         if (!cancelled) setRates(r);
       })
@@ -122,7 +129,7 @@ export default function CurrencyProvider({
     } catch {}
   };
 
-  const found = requested !== base ? rates?.rates[requested] : 1;
+  const found = requested !== base ? (manual ?? rates?.rates[requested]) : 1;
   const converted = requested !== base && typeof found === "number" && found > 0;
   const rate = converted ? found! : 1;
   const display = converted ? requested : base;
@@ -143,7 +150,7 @@ export default function CurrencyProvider({
     requested,
     converted,
     rate,
-    rateDate: rates?.date ?? "",
+    rateDate: manual ? "saisi manuellement" : rates?.date ? `du ${rates.date}` : "",
     loading,
     error,
     fmt,
@@ -151,6 +158,11 @@ export default function CurrencyProvider({
     ct: (text) => (converted ? convertText(text, base, display, rate, (v, compact) => money(v, display, compact)) : text),
     setDisplay,
     convertForGood,
+    manual,
+    setManual: (r) => {
+      setManualRate(base, requested, r);
+      setManualState(r && r > 0 ? r : null);
+    },
     options: CURRENCIES.some((c) => c.code === base) ? CURRENCIES : [{ code: base, label: base }, ...CURRENCIES],
   };
 
@@ -178,19 +190,41 @@ export function CurrencyBar() {
           <button className="btn sm" onClick={c.convertForGood}>Convertir le plan en {c.display}</button>
         )}
       </div>
-      {c.requested !== c.base && (
-        <p className="small" style={{ margin: "6px 0 0" }}>
-          {c.loading ? (
-            <span className="muted"><span className="spinner" /> Récupération du taux…</span>
-          ) : c.converted ? (
-            <span className="muted">
-              1 {c.base} = <strong>{num(c.rate, 4)} {c.display}</strong> (taux du {c.rateDate}). Tous les montants (chiffres,
-              saisies et textes) sont affichés en {c.display}. Les textes se modifient dans la devise du plan.
-            </span>
-          ) : (
-            <span className="neg">{c.error || `Taux ${c.base} → ${c.requested} indisponible.`}</span>
-          )}
-        </p>
+      <RateStatus />
+    </div>
+  );
+}
+
+// État du taux de change : taux utilisé, erreur éventuelle, saisie manuelle possible
+export function RateStatus() {
+  const c = useMoney();
+  const [editing, setEditing] = useState(false);
+  if (c.requested === c.base) return null;
+  const failed = !c.loading && !c.converted;
+  return (
+    <div className="small" style={{ marginTop: 6 }}>
+      {c.loading && !c.converted ? (
+        <span className="muted"><span className="spinner" /> Récupération du taux…</span>
+      ) : c.converted ? (
+        <span className="muted">
+          1 {c.base} = <strong>{num(c.rate, 4)} {c.display}</strong> (taux {c.rateDate}). Tous les montants (chiffres, saisies et
+          textes) sont affichés en {c.display}.{" "}
+          <button className="btn sm" onClick={() => setEditing(!editing)}>{editing ? "Fermer" : "Ajuster le taux"}</button>
+        </span>
+      ) : (
+        <span className="neg">
+          {c.error || `Taux ${c.base} → ${c.requested} indisponible.`} Les montants restent en {c.base} tant qu&apos;aucun taux n&apos;est disponible.
+        </span>
+      )}
+      {(failed || editing) && (
+        <label className="row" style={{ gap: 6, marginTop: 6, flexWrap: "nowrap" }}>
+          <span>Taux manuel : 1 {c.base} =</span>
+          <span style={{ width: 110 }}>
+            <Num value={c.manual ?? 0} onChange={(v) => c.setManual(v > 0 ? v : null)} />
+          </span>
+          <span>{c.requested}</span>
+          {c.manual && <button className="btn sm" onClick={() => c.setManual(null)}>Taux du jour</button>}
+        </label>
       )}
     </div>
   );
