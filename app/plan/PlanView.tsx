@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Plan } from "@/lib/types";
 import { getPlan, savePlan } from "@/lib/storage";
@@ -20,16 +20,16 @@ import { useCloud } from "@/components/CloudProvider";
 import CurrencyProvider, { CurrencyBar, DisplayCurrency } from "@/components/CurrencyProvider";
 
 const TABS = [
-  { id: "summary", label: "Sommaire", C: SummaryTab },
-  { id: "params", label: "Paramètres", C: ParamsTab },
-  { id: "income", label: "Résultats d'exploitation", C: IncomeTab },
-  { id: "cash", label: "Trésorerie", C: CashTab },
-  { id: "breakeven", label: "Point mort", C: BreakEvenTab },
-  { id: "legal", label: "Juridique", C: LegalTab },
-  { id: "swot", label: "SWOT & risques", C: SwotTab },
-  { id: "quotes", label: "Devis", C: QuotesTab },
-  { id: "outreach", label: "Démarches", C: OutreachTab },
-  { id: "assistant", label: "Assistant Claude", C: AssistantTab },
+  { id: "summary", label: "Sommaire", short: "Sommaire", C: SummaryTab },
+  { id: "params", label: "Paramètres", short: "Paramètres", C: ParamsTab },
+  { id: "income", label: "Résultats d'exploitation", short: "Résultats", C: IncomeTab },
+  { id: "cash", label: "Trésorerie", short: "Trésorerie", C: CashTab },
+  { id: "breakeven", label: "Point mort", short: "Point mort", C: BreakEvenTab },
+  { id: "legal", label: "Juridique", short: "Juridique", C: LegalTab },
+  { id: "swot", label: "SWOT & risques", short: "SWOT", C: SwotTab },
+  { id: "quotes", label: "Devis", short: "Devis", C: QuotesTab },
+  { id: "outreach", label: "Démarches", short: "Démarches", C: OutreachTab },
+  { id: "assistant", label: "Assistant Claude", short: "Assistant", C: AssistantTab },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -40,6 +40,15 @@ export default function PlanView({ id }: { id: string }) {
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
 
   const { version, syncing, ready } = useCloud();
+  const tabsRef = useRef<HTMLElement>(null);
+
+  // Garde l'onglet actif visible dans la barre d'onglets défilante (téléphone)
+  useEffect(() => {
+    const el = tabsRef.current?.querySelector<HTMLElement>(".tab.active");
+    if (el && tabsRef.current) {
+      tabsRef.current.scrollTo({ left: el.offsetLeft - (tabsRef.current.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
+    }
+  }, [tab, plan?.id]);
 
   // Relit le plan après chaque synchronisation (modifications faites sur un autre appareil)
   useEffect(() => {
@@ -108,23 +117,26 @@ export default function PlanView({ id }: { id: string }) {
   return (
     <CurrencyProvider plan={plan} update={update}>
     <main className="container">
-      <div className="header">
-        <Link className="btn sm no-print" href="/">← Mes plans</Link>
+      <div className="header plan-header">
+        <div className="top">
+          <Link className="btn sm no-print" href="/">← Mes plans</Link>
+          <div className="actions no-print">
+            <button className="btn sm" onClick={exportJson} title="Exporter le plan (.json)">Exporter</button>
+            <button className="btn sm" onClick={() => window.print()} title="Imprimer ou enregistrer en PDF">PDF</button>
+          </div>
+        </div>
         <div className="grow">
           <h1 style={{ marginBottom: 2 }}>{plan.meta.name}</h1>
           <div className="muted small">
             {plan.meta.businessType} · {[plan.meta.city, plan.meta.country].filter(Boolean).join(", ")} · montants HT en <DisplayCurrency />
           </div>
         </div>
-        <div className="row no-print">
-          <button className="btn sm" onClick={exportJson}>Exporter (.json)</button>
-          <button className="btn sm" onClick={() => window.print()}>Imprimer / PDF</button>
-        </div>
       </div>
-      <nav className="tabs">
+      <nav className="tabs" ref={tabsRef}>
         {TABS.map((t) => (
           <button key={t.id} className={`tab ${t.id === tab ? "active" : ""}`} onClick={() => go(t.id)}>
-            {t.label}
+            <span className="tab-long">{t.label}</span>
+            <span className="tab-short">{t.short}</span>
           </button>
         ))}
       </nav>

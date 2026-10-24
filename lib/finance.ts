@@ -15,6 +15,7 @@ export interface MonthRow {
   year: number; // 1-based
   revenue: number;
   variableCosts: number;
+  variableDetail: Record<string, number>; // charges variables par ligne (id)
   grossMargin: number;
   fixedCosts: number;
   staffCosts: number;
@@ -40,6 +41,7 @@ export interface YearRow {
   year: number;
   revenue: number;
   variableCosts: number;
+  variableDetail: Record<string, number>; // charges variables par ligne (id)
   grossMargin: number;
   grossMarginPct: number;
   fixedCosts: number;
@@ -201,12 +203,20 @@ export function project(params: Params): Projection {
 
     let revenue = 0;
     let variableCosts = 0;
+    const variableDetail: Record<string, number> = {};
     for (const s of params.revenueStreams) {
       const units =
         s.unitsPerDay * s.openDaysPerMonth * season[cal] * ramp * Math.pow(1 + s.growthPct / 100, y) * volumeF;
       const rev = units * s.unitPrice * priceIndex * priceF;
       revenue += rev;
-      variableCosts += units * s.unitPrice * priceIndex * (s.variableCostPct / 100) * costF;
+      variableCosts += units * s.unitPrice * priceIndex * ((s.variableCostPct || 0) / 100) * costF;
+      // Charges variables : % du CA de la ligne, ou montant par unité vendue (indexé sur l'inflation)
+      for (const vc of params.variableCosts ?? []) {
+        if (vc.streamId && vc.streamId !== s.id) continue;
+        const cost = (vc.mode === "unit" ? units * vc.value * priceIndex : rev * (vc.value / 100)) * costF;
+        variableDetail[vc.id] = (variableDetail[vc.id] ?? 0) + cost;
+        variableCosts += cost;
+      }
     }
     const fixedCosts = sum(params.fixedCosts.map((c) => c.monthly)) * priceIndex * costF;
     const staffCosts =
@@ -256,6 +266,7 @@ export function project(params: Params): Projection {
       year: idx,
       revenue,
       variableCosts,
+      variableDetail,
       grossMargin: revenue - variableCosts,
       fixedCosts,
       staffCosts,
@@ -289,6 +300,8 @@ export function project(params: Params): Projection {
     const f = (k: keyof MonthRow) => sum(rows.map((r) => r[k] as number));
     const revenue = f("revenue");
     const variableCosts = f("variableCosts");
+    const variableDetail: Record<string, number> = {};
+    for (const r of rows) for (const [k, v] of Object.entries(r.variableDetail)) variableDetail[k] = (variableDetail[k] ?? 0) + v;
     const grossMargin = revenue - variableCosts;
     const fixedCosts = f("fixedCosts");
     const staffCosts = f("staffCosts");
@@ -307,6 +320,7 @@ export function project(params: Params): Projection {
       year: y,
       revenue,
       variableCosts,
+      variableDetail,
       grossMargin,
       grossMarginPct: revenue > 0 ? (grossMargin / revenue) * 100 : 0,
       fixedCosts,

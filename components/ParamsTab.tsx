@@ -2,6 +2,7 @@
 
 import EditTable from "./EditTable";
 import ScenarioBar from "./ScenarioBar";
+import VariableCostsCard from "./VariableCostsCard";
 import { MoneyNum, RateStatus, useMoney } from "./CurrencyProvider";
 import { Num } from "./ui";
 import type { TabProps } from "./tab";
@@ -104,20 +105,19 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
         <EditTable<RevenueStream>
           rows={p.revenueStreams}
           onChange={(rows) => setP({ revenueStreams: rows })}
-          blank={{ label: "Nouvelle ligne", unitLabel: "unité", unitPrice: 0, unitsPerDay: 0, openDaysPerMonth: 26, variableCostPct: 30, growthPct: 3, note: "" }}
+          blank={{ label: "Nouvelle ligne", unitLabel: "unité", unitPrice: 0, unitsPerDay: 0, openDaysPerMonth: 26, variableCostPct: 0, growthPct: 3, note: "" }}
           columns={[
             { key: "label", label: "Ligne de revenu", type: "text" },
             { key: "unitLabel", label: "Unité", type: "text", width: 90 },
             { key: "unitPrice", label: `Prix HT (${dc})`, type: "money" },
             { key: "unitsPerDay", label: "Unités / jour", type: "number" },
             { key: "openDaysPerMonth", label: "Jours / mois", type: "number" },
-            { key: "variableCostPct", label: "Coût variable %", type: "number" },
             { key: "growthPct", label: "Croissance %/an", type: "number" },
             { key: "note", label: "Note", type: "text", width: 200 },
           ]}
           footer={
             <tr className="total">
-              <td colSpan={8}>
+              <td colSpan={7}>
                 CA mensuel en régime de croisière (hors saisonnalité) :{" "}
                 {mt(p.revenueStreams.reduce((a, s) => a + s.unitPrice * s.unitsPerDay * s.openDaysPerMonth, 0))}
               </td>
@@ -126,6 +126,8 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           }
         />
       </div>
+
+      <VariableCostsCard params={p} setP={setP} askClaude={askClaude} />
 
       <div className="card">
         <h2>Charges fixes mensuelles</h2>

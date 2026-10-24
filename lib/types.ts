@@ -9,8 +9,18 @@ export interface RevenueStream {
   unitPrice: number; // prix de vente HT par unité
   unitsPerDay: number; // volume moyen par jour d'ouverture, en régime de croisière
   openDaysPerMonth: number;
-  variableCostPct: number; // coût variable en % du CA (matières, consommables, commissions…)
+  variableCostPct: number; // ancien coût variable par ligne (repris dans variableCosts, laissé à 0)
   growthPct: number; // croissance annuelle des volumes
+  note: string;
+}
+
+// Charge variable : proportionnelle au CA (%) ou au nombre d'unités vendues (montant par unité)
+export interface VariableCost {
+  id: string;
+  label: string;
+  mode: "pct" | "unit";
+  value: number; // % du CA, ou montant HT par unité vendue (devise du plan)
+  streamId: string | null; // ligne de CA concernée ; null = toutes les lignes
   note: string;
 }
 
@@ -70,6 +80,7 @@ export interface Params {
   rampUpMonths: number; // durée de montée en charge
   rampUpStartPct: number; // % du régime de croisière au premier mois
   revenueStreams: RevenueStream[];
+  variableCosts: VariableCost[];
   fixedCosts: FixedCost[];
   staff: StaffLine[];
   investments: Investment[];
