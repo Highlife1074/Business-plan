@@ -61,3 +61,36 @@ test("les erreurs sont signalées sans bloquer les autres modifications", () => 
   assert.equal(errors.length, 4);
   assert.equal(p.params.horizonYears, 7);
 });
+
+test("charges variables : ajout en % sur une ligne de CA (par libellé) et modification", () => {
+  const plan = demoPlan("x");
+  const base = project(plan.params).years[1];
+  const { plan: p, errors, log } = applyPlanChanges(plan, [
+    { action: "ajouter", section: "charges_variables", valeurs: { label: "Commission application", mode: "pct", value: 3, streamId: "portique" } },
+    { action: "modifier", section: "charges_variables", id: "vc-energie", valeurs: { value: 6 } },
+  ], newId);
+  assert.deepEqual(errors, []);
+  const added = p.params.variableCosts.at(-1)!;
+  assert.equal(added.streamId, "rs-portique");
+  assert.equal(p.params.variableCosts.find((v) => v.id === "vc-energie")!.value, 6);
+  assert.ok(project(p.params).years[1].variableCosts > base.variableCosts);
+  assert.equal(log.length, 2);
+});
+
+import { migrateVariableCosts } from "./plan.ts";
+
+test("anciens plans : le % de coût variable des lignes de CA devient une charge variable, sans changer les résultats", () => {
+  const plan = demoPlan("x");
+  const legacy = {
+    ...plan.params,
+    variableCosts: undefined as unknown as typeof plan.params.variableCosts,
+    revenueStreams: plan.params.revenueStreams.map((s, i) => ({ ...s, variableCostPct: [12, 15, 5][i] })),
+  };
+  const before = project({ ...legacy, variableCosts: [] }).years[2];
+  const migrated = migrateVariableCosts(legacy);
+  assert.equal(migrated.variableCosts.length, 3);
+  assert.ok(migrated.revenueStreams.every((s) => s.variableCostPct === 0));
+  assert.equal(migrated.variableCosts[0].streamId, "rs-boxes");
+  assert.ok(Math.abs(project(migrated).years[2].netIncome - before.netIncome) < 1);
+  assert.equal(migrateVariableCosts(migrated), migrated, "migration idempotente");
+});

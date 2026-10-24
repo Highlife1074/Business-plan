@@ -12,7 +12,7 @@ export interface PlanChange {
   valeurs?: Record<string, unknown>;
 }
 
-type FieldType = "number" | "string" | "level" | "stringList";
+type FieldType = "number" | "string" | "level" | "stringList" | "mode" | "streamRef";
 
 interface ListSection {
   kind: "list";
@@ -91,11 +91,20 @@ export const SECTIONS: Record<string, ListSection | ObjectSection> = {
     nameField: "label",
     fields: {
       label: "string", unitLabel: "string", unitPrice: "number", unitsPerDay: "number",
-      openDaysPerMonth: "number", variableCostPct: "number", growthPct: "number", note: "string",
+      openDaysPerMonth: "number", growthPct: "number", note: "string",
     },
     get: (p) => p.params.revenueStreams,
     set: (p, rows) => withParams(p, { revenueStreams: rows as Plan["params"]["revenueStreams"] }),
-    blank: { label: "Nouvelle ligne", unitLabel: "unité", unitPrice: 0, unitsPerDay: 0, openDaysPerMonth: 26, variableCostPct: 30, growthPct: 0, note: "" },
+    blank: { label: "Nouvelle ligne", unitLabel: "unité", unitPrice: 0, unitsPerDay: 0, openDaysPerMonth: 26, variableCostPct: 0, growthPct: 0, note: "" },
+  },
+  charges_variables: {
+    kind: "list",
+    label: "Charges variables",
+    nameField: "label",
+    fields: { label: "string", mode: "mode", value: "number", streamId: "streamRef", note: "string" },
+    get: (p) => p.params.variableCosts ?? [],
+    set: (p, rows) => withParams(p, { variableCosts: rows as Plan["params"]["variableCosts"] }),
+    blank: { label: "Nouvelle charge variable", mode: "pct", value: 0, streamId: null, note: "" },
   },
   charges_fixes: {
     kind: "list",
@@ -162,8 +171,18 @@ export const SECTIONS: Record<string, ListSection | ObjectSection> = {
   },
 };
 
-function coerce(type: FieldType, value: unknown): { ok: true; value: unknown } | { ok: false } {
+function coerce(type: FieldType, value: unknown, plan: Plan): { ok: true; value: unknown } | { ok: false } {
   switch (type) {
+    case "mode":
+      return value === "pct" || value === "unit" ? { ok: true, value } : { ok: false };
+    case "streamRef": {
+      // ligne de CA par identifiant ou libellé ; vide, null ou « toutes » = toutes les lignes
+      if (value === null || value === "" || (typeof value === "string" && /^tout/i.test(value))) return { ok: true, value: null };
+      if (typeof value !== "string") return { ok: false };
+      const q = value.toLowerCase();
+      const s = plan.params.revenueStreams.find((r) => r.id === value) ?? plan.params.revenueStreams.find((r) => r.label.toLowerCase().includes(q));
+      return s ? { ok: true, value: s.id } : { ok: false };
+    }
     case "number": {
       const n = typeof value === "number" ? value : Number(String(value).replace(/[\s  ]/g, "").replace(",", "."));
       return Number.isFinite(n) ? { ok: true, value: n } : { ok: false };
@@ -178,6 +197,7 @@ function coerce(type: FieldType, value: unknown): { ok: true; value: unknown } |
 }
 
 function cleanValues(
+  plan: Plan,
   fields: Record<string, FieldType>,
   values: Record<string, unknown> | undefined,
   errors: string[],
@@ -190,7 +210,7 @@ function cleanValues(
       errors.push(`${where} : champ inconnu « ${k} » (champs possibles : ${Object.keys(fields).join(", ")})`);
       continue;
     }
-    const c = coerce(type, v);
+    const c = coerce(type, v, plan);
     if (!c.ok) errors.push(`${where} : valeur invalide pour « ${k} » (${JSON.stringify(v)})`);
     else out[k] = k === "done" ? Boolean(c.value) : c.value;
   }
@@ -219,7 +239,7 @@ export function applyPlanChanges(
         errors.push(`${section.label} : seule l'action « modifier » est possible`);
         continue;
       }
-      const values = cleanValues(section.fields, ch.valeurs, errors, section.label);
+      const values = cleanValues(p, section.fields, ch.valeurs, errors, section.label);
       if (Object.keys(values).length === 0) continue;
       const before = section.get(p);
       p = section.set(p, values);
@@ -236,7 +256,7 @@ export function applyPlanChanges(
     };
     const name = (r: unknown) => String((r as Record<string, unknown>)[section.nameField] ?? "");
     if (ch.action === "ajouter") {
-      const values = cleanValues(section.fields, ch.valeurs, errors, section.label);
+      const values = cleanValues(p, section.fields, ch.valeurs, errors, section.label);
       const row = { ...section.blank, ...values, id: newId() };
       p = section.set(p, [...rows, row]);
       log.push(`${section.label} : ajout de « ${name(row)} »`);
@@ -254,7 +274,7 @@ export function applyPlanChanges(
         errors.push(`${section.label} : ligne « ${ch.id ?? "?"} » introuvable`);
         continue;
       }
-      const values = cleanValues(section.fields, ch.valeurs, errors, `${section.label} « ${name(rows[i])} »`);
+      const values = cleanValues(p, section.fields, ch.valeurs, errors, `${section.label} « ${name(rows[i])} »`);
       if (Object.keys(values).length === 0) continue;
       const before = rows[i] as Record<string, unknown>;
       p = section.set(p, rows.map((r, j) => (j === i ? { ...r, ...values } : r)));

@@ -26,7 +26,7 @@ export default function CashTab({ plan, proj, update }: TabProps) {
     { label: "Subventions", value: (r) => r.subsidiesIn, format: m },
     { label: "Total encaissements", value: (r) => r.cashIn, format: m, kind: "total" },
     { label: "Investissements", value: (r) => -r.investmentsOut, format: m },
-    { label: "Coûts variables", value: (r) => -r.variableCosts, format: m },
+    { label: "Charges variables", value: (r) => -r.variableCosts, format: m },
     { label: "Charges fixes", value: (r) => -r.fixedCosts, format: m },
     { label: "Salaires et charges", value: (r) => -r.staffCosts, format: m },
     { label: "Intérêts", value: (r) => -r.interest, format: m },

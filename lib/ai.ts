@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEFAULT_SENDER } from "./plan";
+import { DEFAULT_SENDER, migrateVariableCosts } from "./plan";
 import type { Plan } from "./types";
 import { uid } from "./uid";
 
@@ -33,11 +33,21 @@ export const FiguresSchema = z.object({
         unitPrice: z.number().describe("Prix de vente moyen HT par unité, dans la devise locale"),
         unitsPerDay: z.number().describe("Unités vendues par jour d'ouverture en régime de croisière"),
         openDaysPerMonth: z.number(),
-        variableCostPct: z.number().describe("Coût variable direct en % du CA de cette ligne"),
         growthPct: z.number().describe("Croissance annuelle des volumes en %"),
         note: z.string().describe("Justification courte de l'hypothèse"),
       }),
     ),
+    variableCosts: z
+      .array(
+        z.object({
+          label: z.string().describe("Matières premières, emballages, commissions de plateformes, frais de paiement…"),
+          mode: z.enum(["pct", "unit"]).describe("pct = % du CA ; unit = montant HT par unité vendue"),
+          value: z.number().describe("Pourcentage, ou montant par unité dans la devise locale"),
+          streamLabel: z.string().describe("Libellé exact de la ligne de CA concernée, ou chaîne vide pour toutes"),
+          note: z.string(),
+        }),
+      )
+      .describe("Charges variables détaillées, proportionnelles à l'activité"),
     fixedCosts: z.array(
       z.object({
         label: z.string(),
@@ -136,7 +146,7 @@ export function figuresPrompt(req: GenerateRequest): string {
   return [
     ...briefLines(req),
     "",
-    "Établis les hypothèses chiffrées détaillées du business plan : lignes de revenus, charges fixes, personnel, investissements et financement, ainsi que les paramètres généraux (fiscalité, inflation, saisonnalité, montée en charge).",
+    "Établis les hypothèses chiffrées détaillées du business plan : lignes de revenus, charges variables détaillées (matières, consommables, commissions… en % du CA ou par unité vendue), charges fixes, personnel, investissements et financement, ainsi que les paramètres généraux (fiscalité, inflation, saisonnalité, montée en charge).",
   ].join("\n");
 }
 
@@ -156,6 +166,7 @@ export function textsPrompt(req: GenerateRequest, figures: z.infer<typeof Figure
 export function toPlan(g: GeneratedPlan, req: GenerateRequest): Plan {
   const now = new Date().toISOString();
   const p = g.params;
+  const streams = p.revenueStreams.map((s) => ({ id: uid(), ...s, variableCostPct: 0 }));
   const season =
     p.seasonality.length === 12 ? p.seasonality : new Array(12).fill(1);
   return {
@@ -181,7 +192,12 @@ export function toPlan(g: GeneratedPlan, req: GenerateRequest): Plan {
       seasonality: season,
       rampUpMonths: p.rampUpMonths,
       rampUpStartPct: p.rampUpStartPct,
-      revenueStreams: p.revenueStreams.map((s) => ({ id: uid(), ...s })),
+      revenueStreams: streams,
+      variableCosts: p.variableCosts.map(({ streamLabel, ...v }) => ({
+        id: uid(),
+        ...v,
+        streamId: streams.find((s) => streamLabel && s.label.toLowerCase() === streamLabel.toLowerCase())?.id ?? null,
+      })),
       fixedCosts: p.fixedCosts.map((c) => ({ id: uid(), ...c })),
       staff: p.staff.map((s) => ({ id: uid(), ...s })),
       investments: p.investments.map((i) => ({ id: uid(), ...i })),

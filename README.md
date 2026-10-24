@@ -9,8 +9,8 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 | Onglet | Contenu |
 |---|---|
 | **Sommaire** | Vue macro : alertes, indicateurs clés (investissement, CA, EBE, résultat net, point mort, trésorerie min., retour sur investissement, VAN/TRI), graphiques, synthèse, SWOT résumé |
-| **Paramètres** | Toutes les hypothèses modifiables : généraux (TVA, IS, charges sociales, inflation), saisonnalité, montée en charge, lignes de chiffre d'affaires, charges fixes, personnel, investissements, financement (apport, subventions, prêts avec différé) |
-| **Résultats d'exploitation** | Compte de résultat prévisionnel annuel + détail mensuel |
+| **Paramètres** | Toutes les hypothèses modifiables : généraux (TVA, IS, charges sociales, inflation), saisonnalité, montée en charge, lignes de chiffre d'affaires, **charges variables** (en % du CA ou par unité vendue, pour toutes les lignes ou une seule), charges fixes, personnel, investissements, financement (apport, subventions, prêts avec différé) |
+| **Résultats d'exploitation** | Compte de résultat prévisionnel annuel + détail mensuel, avec le détail de chaque charge variable |
 | **Trésorerie** | Plan de financement initial, courbe de trésorerie, tableaux annuel et mensuel des encaissements / décaissements |
 | **Point mort** | Seuil de rentabilité, point mort en jours et date, marge de sécurité, volumes nécessaires par jour |
 | **Juridique** | Forme juridique, autorisations, fiscalité… propres au pays (éditable, approfondissable avec Claude) |

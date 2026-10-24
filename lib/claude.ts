@@ -168,7 +168,8 @@ Sections et champs :
 - financement (modifier) : equity, subsidies
 - scenario (modifier) : volumePct, pricePct, costPct
 - textes (modifier) : summary, market, strengths[], weaknesses[], opportunities[], threats[], keyAssumptions[]
-- revenus (ajouter/modifier/supprimer) : label, unitLabel, unitPrice, unitsPerDay, openDaysPerMonth, variableCostPct, growthPct, note
+- revenus (ajouter/modifier/supprimer) : label, unitLabel, unitPrice, unitsPerDay, openDaysPerMonth, growthPct, note
+- charges_variables : label, mode ("pct" = % du CA | "unit" = montant par unité vendue), value, streamId (id ou libellé de la ligne de CA concernée, vide = toutes), note
 - charges_fixes : label, monthly, note
 - personnel : role, count, grossMonthly, startMonth
 - investissements : label, amount, depreciationYears, note
