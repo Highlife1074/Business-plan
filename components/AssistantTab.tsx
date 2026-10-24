@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { TabProps } from "./tab";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, Plan } from "@/lib/types";
+import { applyPlanChanges, type PlanChange } from "@/lib/plan-edit";
+import { uid } from "@/lib/uid";
 import { planContext } from "@/lib/context";
 import { askClaude } from "@/lib/claude";
 import { useMoney } from "./CurrencyProvider";
 import { num } from "@/lib/format";
 
 const SUGGESTIONS = [
+  "Baisse le loyer de 10 % et ajoute un salarié à mi-temps à partir du mois 6",
   "Quels sont les 3 points faibles de ce plan aux yeux d'un banquier ?",
   "Mes hypothèses de prix et de volumes sont-elles réalistes pour ce pays ?",
   "Comment réduire le besoin de financement initial ?",
@@ -22,6 +25,10 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
   const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const handled = useRef<string | null>(null);
+  // Plan le plus récent (les modifications de Claude s'appliquent dessus, même pendant la réponse)
+  const planRef = useRef(plan);
+  planRef.current = plan;
+  const [undo, setUndo] = useState<{ before: Plan; count: number } | null>(null);
 
   const { ct, converted, base, display, rate } = useMoney();
   // Devise d'affichage choisie : Claude donne alors ses montants dans cette devise
@@ -35,18 +42,40 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
     const history: ChatMessage[] = [...plan.chat, { role: "user", content: q }];
     update((p) => ({ ...p, chat: history }));
     setInput("");
+    setUndo(null);
     setBusy(true);
     setError("");
     setStreaming("");
     let answer = "";
+    const applied: string[] = [];
+    let before: Plan | null = null;
+    const onEdit = (changes: PlanChange[]) => {
+      const result = applyPlanChanges(planRef.current, changes, uid);
+      if (result.log.length) {
+        before ??= planRef.current;
+        planRef.current = result.plan;
+        applied.push(...result.log);
+        // la conversation est conservée telle quelle : seules les données du plan changent
+        update((p) => ({ ...result.plan, chat: p.chat }));
+      }
+      return result;
+    };
     try {
       await askClaude(planContext(plan, proj) + currencyNote, history, (delta) => {
         answer += delta;
         setStreaming(answer);
-      });
+      }, onEdit);
+      if (applied.length) {
+        answer += `\n\n🔧 Modifications appliquées au plan :\n- ${applied.join("\n- ")}`;
+        setUndo({ before: before!, count: applied.length });
+      }
       update((p) => ({ ...p, chat: [...p.chat, { role: "assistant", content: answer }] }));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      if (applied.length) {
+        answer += `\n\n🔧 Modifications appliquées au plan :\n- ${applied.join("\n- ")}`;
+        setUndo({ before: before!, count: applied.length });
+      }
       if (answer) update((p) => ({ ...p, chat: [...p.chat, { role: "assistant", content: answer }] }));
     } finally {
       setStreaming("");
@@ -86,6 +115,21 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
       <div className="chat">
         {plan.chat.map((msg, i) => <div key={i} className={`msg ${msg.role}`}>{ct(msg.content)}</div>)}
         {busy && <div className="msg assistant">{ct(streaming) || <span className="spinner" />}</div>}
+        {undo && !busy && (
+          <div className="alert good row" style={{ justifyContent: "space-between" }}>
+            <span className="small">Claude a modifié {undo.count} valeur{undo.count > 1 ? "s" : ""} du plan : tous les onglets sont recalculés.</span>
+            <button
+              className="btn sm"
+              onClick={() => {
+                const before = undo.before;
+                update((p) => ({ ...before, chat: [...p.chat, { role: "assistant", content: "↩️ Modifications annulées : le plan est revenu à son état précédent." }] }));
+                setUndo(null);
+              }}
+            >
+              Annuler ces modifications
+            </button>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
       {error && <p className="neg">{error}</p>}

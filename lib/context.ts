@@ -1,7 +1,8 @@
 import type { Plan } from "./types";
 import type { Projection } from "./finance";
 
-// Contexte textuel envoyé à l'assistant Claude : hypothèses, résultats calculés et analyses.
+// Contexte envoyé à l'assistant Claude : hypothèses (avec les identifiants des lignes, utilisés
+// par l'outil modifier_plan), résultats calculés et analyses. Montants dans la devise du plan.
 export function planContext(plan: Plan, proj: Projection): string {
   const r = (n: number) => (Number.isFinite(n) ? Math.round(n) : null);
   const years = proj.years.map((y) => ({
@@ -37,7 +38,7 @@ export function planContext(plan: Plan, proj: Projection): string {
       syntheses: {
         synthese: plan.texts.summary,
         marche: plan.texts.market,
-        juridique: plan.texts.legal.map((l) => `${l.title} : ${l.content}`),
+        juridique: plan.texts.legal,
         forces: plan.texts.strengths,
         faiblesses: plan.texts.weaknesses,
         opportunites: plan.texts.opportunities,
@@ -45,6 +46,7 @@ export function planContext(plan: Plan, proj: Projection): string {
         risques: plan.texts.risks,
       },
       devis: quotes,
+      devisAObtenir: plan.quoteNeeds,
     },
     null,
     1,
