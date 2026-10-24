@@ -22,7 +22,9 @@ export default function Home() {
   const [error, setError] = useState("");
 
   const { version } = useCloud();
-  useEffect(() => setPlans(listPlans()), [version]);
+  useEffect(() => {
+    setPlans(listPlans());
+  }, [version]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [k]: e.target.value });

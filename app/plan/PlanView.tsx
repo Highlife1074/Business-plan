@@ -42,7 +42,9 @@ export default function PlanView({ id }: { id: string }) {
   const { version, syncing, ready } = useCloud();
 
   // Relit le plan après chaque synchronisation (modifications faites sur un autre appareil)
-  useEffect(() => setPlan(getPlan(id)), [id, version]);
+  useEffect(() => {
+    setPlan(getPlan(id));
+  }, [id, version]);
 
   useEffect(() => {
     try {
