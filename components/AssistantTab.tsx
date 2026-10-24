@@ -63,7 +63,11 @@ export default function AssistantTab({ plan, proj, update, pendingQuestion, clea
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingQuestion]);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [plan.chat.length, streaming]);
+  // Corps en bloc : scrollIntoView renvoie une Promise sur les navigateurs récents, et React
+  // planterait au démontage en la prenant pour une fonction de nettoyage.
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [plan.chat.length, streaming]);
 
   return (
     <div className="card">
