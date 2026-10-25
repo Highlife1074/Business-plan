@@ -2,6 +2,7 @@
 
 import { MoneyNum, useMoney } from "./CurrencyProvider";
 import { AutoText, Num } from "./ui";
+import SharePie from "./SharePie";
 import type { Params, VariableCost } from "@/lib/types";
 import { num } from "@/lib/format";
 import { uid } from "@/lib/uid";
@@ -114,6 +115,13 @@ export default function VariableCostsCard({
       >
         + Ajouter une charge variable
       </button>
+      {rows.filter((r) => monthly(r) > 0).length >= 2 && (
+        <>
+          <h3 style={{ marginTop: 16 }}>Part de chaque poste</h3>
+          <p className="muted small" style={{ margin: 0 }}>Charges variables d&apos;un mois en régime de croisière.</p>
+          <SharePie items={rows.map((r) => ({ id: r.id, label: r.label, value: monthly(r) }))} totalLabel="par mois" />
+        </>
+      )}
     </div>
   );
 }
