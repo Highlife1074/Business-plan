@@ -53,7 +53,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
       <div className="card">
         <h2>Paramètres généraux</h2>
         <div className="grid grid-kpi">
-          <label className="field">
+          <label className="field span-2">
             Nom du projet
             <AutoText singleLine value={plan.meta.name} onChange={(v) => update((pl) => ({ ...pl, meta: { ...pl.meta, name: v } }))} />
           </label>
@@ -108,7 +108,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
           blank={{ label: "Nouvelle ligne", unitLabel: "unité", unitPrice: 0, unitsPerDay: 0, openDaysPerMonth: 26, variableCostPct: 0, growthPct: 3, note: "" }}
           columns={[
             { key: "label", label: "Ligne de revenu", type: "text" },
-            { key: "unitLabel", label: "Unité", type: "text", width: 90 },
+            { key: "unitLabel", label: "Unité", type: "text", width: 130 },
             { key: "unitPrice", label: `Prix HT (${dc})`, type: "money" },
             { key: "unitsPerDay", label: "Unités / jour", type: "number" },
             { key: "openDaysPerMonth", label: "Jours / mois", type: "number" },

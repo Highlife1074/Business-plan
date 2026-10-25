@@ -65,14 +65,14 @@ export default function VariableCostsCard({
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td data-label="Charge"><AutoText singleLine value={r.label} onChange={(v) => set(r.id, { label: v })} /></td>
-                <td data-label="Calcul">
+                <td data-label="Charge" className="col-text"><AutoText singleLine value={r.label} onChange={(v) => set(r.id, { label: v })} /></td>
+                <td data-label="Calcul" className="col-select">
                   <select value={r.mode} onChange={(e) => set(r.id, { mode: e.target.value as VariableCost["mode"] })}>
                     <option value="pct">% du CA</option>
                     <option value="unit">par unité vendue</option>
                   </select>
                 </td>
-                <td data-label="Valeur" style={{ minWidth: 120 }}>
+                <td data-label="Valeur" className="col-number">
                   {r.mode === "pct" ? (
                     <div className="row" style={{ flexWrap: "nowrap", gap: 4 }}>
                       <Num value={r.value} onChange={(v) => set(r.id, { value: v })} /> <span className="muted">%</span>
@@ -83,14 +83,14 @@ export default function VariableCostsCard({
                     </div>
                   )}
                 </td>
-                <td data-label="S'applique à">
+                <td data-label="S'applique à" className="col-select">
                   <select value={r.streamId ?? ""} onChange={(e) => set(r.id, { streamId: e.target.value || null })}>
                     <option value="">Toutes les lignes</option>
                     {streams.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                   </select>
                 </td>
-                <td data-label="≈ / mois">{fmt(monthly(r))}</td>
-                <td data-label="Note" style={{ minWidth: 180 }}><AutoText singleLine value={r.note} onChange={(v) => set(r.id, { note: v })} /></td>
+                <td data-label="≈ / mois" className="col-number">{fmt(monthly(r))}</td>
+                <td data-label="Note" className="col-text"><AutoText singleLine value={r.note} onChange={(v) => set(r.id, { note: v })} /></td>
                 <td className="actions">
                   <button className="btn sm" title="Supprimer" onClick={() => setRows(rows.filter((x) => x.id !== r.id))}>✕</button>
                 </td>
