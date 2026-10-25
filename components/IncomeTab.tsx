@@ -3,6 +3,7 @@
 import { useState } from "react";
 import FinTable, { type FinLine } from "./FinTable";
 import ScenarioBar from "./ScenarioBar";
+import SharePie from "./SharePie";
 import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { MonthRow, YearRow } from "@/lib/finance";
@@ -13,6 +14,7 @@ export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
   const m = (v: number) => fmt(v);
   const p = (v: number) => pct(v);
   const [detailYear, setDetailYear] = useState(1);
+  const [pieYear, setPieYear] = useState(1);
   // Détail des charges variables (une sous-ligne par charge)
   const variableLines = <R extends { variableDetail: Record<string, number> }>(): FinLine<R>[] =>
     (plan.params.variableCosts ?? []).map((vc) => ({
@@ -55,6 +57,8 @@ export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
     { label: "Résultat avant impôt", value: (r) => r.ebt, format: m, kind: "total", signColor: true },
   ];
   const months = proj.months.filter((r) => r.year === detailYear);
+  const pieRow = proj.years.find((y) => y.year === pieYear) ?? proj.years[0];
+  const pieItems = (plan.params.variableCosts ?? []).map((vc) => ({ id: vc.id, label: vc.label, value: pieRow?.variableDetail[vc.id] ?? 0 }));
 
   return (
     <>
@@ -77,6 +81,17 @@ export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
         </div>
         <FinTable columns={months} headers={months.map((r) => r.label)} lines={monthLines} />
       </div>
+      {pieItems.filter((x) => x.value > 0).length >= 2 && (
+        <div className="card">
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <h2>Répartition des charges variables</h2>
+            <select style={{ width: "auto" }} value={pieYear} onChange={(e) => setPieYear(Number(e.target.value))}>
+              {proj.years.map((y) => <option key={y.year} value={y.year}>Année {y.year}</option>)}
+            </select>
+          </div>
+          <SharePie items={pieItems} totalLabel={`année ${pieYear}`} />
+        </div>
+      )}
     </>
   );
 }
