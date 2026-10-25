@@ -13,10 +13,19 @@ export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
   const m = (v: number) => fmt(v);
   const p = (v: number) => pct(v);
   const [detailYear, setDetailYear] = useState(1);
+  // Détail des charges variables (une sous-ligne par charge)
+  const variableLines = <R extends { variableDetail: Record<string, number> }>(): FinLine<R>[] =>
+    (plan.params.variableCosts ?? []).map((vc) => ({
+      label: `  dont ${vc.label}`,
+      value: (r: R) => -(r.variableDetail[vc.id] ?? 0),
+      format: m,
+      kind: "sub" as const,
+    }));
 
   const yearLines: FinLine<YearRow>[] = [
     { label: "Chiffre d'affaires HT", value: (y) => y.revenue, format: m, kind: "total" },
-    { label: "Coûts variables", value: (y) => -y.variableCosts, format: m },
+    { label: "Charges variables", value: (y) => -y.variableCosts, format: m },
+    ...variableLines<YearRow>(),
     { label: "Marge brute", value: (y) => y.grossMargin, format: m, kind: "total", signColor: true },
     { label: "Taux de marge brute", value: (y) => y.grossMarginPct, format: p, kind: "sub" },
     { label: "Charges fixes", value: (y) => -y.fixedCosts, format: m },
@@ -35,7 +44,8 @@ export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
 
   const monthLines: FinLine<MonthRow>[] = [
     { label: "Chiffre d'affaires HT", value: (r) => r.revenue, format: m, kind: "total" },
-    { label: "Coûts variables", value: (r) => -r.variableCosts, format: m },
+    { label: "Charges variables", value: (r) => -r.variableCosts, format: m },
+    ...variableLines<MonthRow>(),
     { label: "Marge brute", value: (r) => r.grossMargin, format: m, kind: "total" },
     { label: "Charges fixes", value: (r) => -r.fixedCosts, format: m },
     { label: "Personnel", value: (r) => -r.staffCosts, format: m },

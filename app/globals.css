@@ -163,3 +163,109 @@ table.edit input, table.edit select { min-width: 110px; }
 }
 
 .converted-text { white-space: pre-wrap; padding: 6px 8px; border: 1px dashed var(--border); border-radius: 6px; background: var(--surface-2); }
+
+/* ===== Téléphone (Samsung Galaxy S25 Ultra ≈ 412 px de large) ===== */
+html { -webkit-text-size-adjust: 100%; }
+body { padding-bottom: env(safe-area-inset-bottom); }
+button, a, select, input[type="range"] { touch-action: manipulation; }
+
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .container { padding: 12px max(12px, env(safe-area-inset-left)) 24px max(12px, env(safe-area-inset-right)); }
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1.1rem; }
+  .card { padding: 14px; margin-bottom: 12px; border-radius: 14px; }
+
+  /* Champs à 16 px : Chrome ne zoome plus à chaque saisie ; zones tactiles ≥ 44 px */
+  input, textarea, select { font-size: 16px; min-height: 44px; padding: 8px 10px; border-radius: 10px; }
+  input[type="checkbox"] { min-height: 0; width: 22px; height: 22px; }
+  input[type="range"] { min-height: 32px; }
+  .btn { min-height: 44px; padding: 10px 16px; border-radius: 12px; justify-content: center; }
+  .btn.sm { min-height: 40px; padding: 8px 12px; font-size: 0.9rem; }
+  label.field { font-size: 0.9rem; }
+
+  /* En-tête du plan compact */
+  .plan-header { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 8px; }
+  .plan-header .top { display: flex; justify-content: space-between; gap: 8px; }
+  .plan-header .actions { display: flex; gap: 6px; }
+  .plan-header .actions .btn { padding: 8px 10px; }
+
+  /* Onglets : pastilles défilantes, toujours visibles en haut */
+  .tabs {
+    gap: 6px; border-bottom: none; margin: 0 -12px 12px; padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+    scrollbar-width: none; scroll-snap-type: x proximity; box-shadow: 0 1px 0 var(--border);
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    border: 1px solid var(--border); border-radius: 999px; padding: 9px 14px; min-height: 40px;
+    background: var(--surface); scroll-snap-align: center; font-size: 0.95rem;
+  }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .grid-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .kpi { padding: 10px; border-radius: 12px; }
+  .kpi .value { font-size: 1.1rem; overflow-wrap: anywhere; }
+  .chart { height: 240px; }
+
+  /* Tableaux de saisie : une carte par ligne, chaque champ avec son libellé */
+  table.cards thead { display: none; }
+  table.cards, table.cards tbody { display: block; width: 100%; }
+  table.cards tr {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; padding: 12px;
+    margin-bottom: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  }
+  table.cards td {
+    display: flex; flex-direction: column; gap: 4px; padding: 0; border: none; white-space: normal;
+    min-width: 0 !important; position: static; text-align: left; background: none;
+  }
+  table.cards td::before { content: attr(data-label); font-size: 0.8rem; color: var(--muted); }
+  table.cards td:first-child { grid-column: 1 / -1; min-width: 0; }
+  table.cards td:first-child input { font-weight: 600; }
+  table.cards td.actions { grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; }
+  table.cards td.actions::before { content: none; }
+  table.cards input, table.cards select { min-width: 0; }
+  table.cards tr.total { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; background: var(--surface-2); }
+  table.cards tr.total td { display: block; }
+  table.cards tr.total td::before { content: none; }
+  table.cards tr.total td:empty { display: none; }
+
+  /* Tableaux financiers : défilement horizontal, première colonne figée */
+  .table-wrap { margin: 0 -14px; padding: 0 14px; }
+  table:not(.cards) { font-size: 0.85rem; }
+  table:not(.cards) th:first-child, table:not(.cards) td:first-child { max-width: 46vw; white-space: normal; box-shadow: 1px 0 0 var(--border); }
+
+  .msg { max-width: 100%; }
+  .swot { grid-template-columns: 1fr; }
+  .plan-list { grid-template-columns: 1fr; }
+}
+
+.plan-header { flex-direction: column; align-items: stretch; }
+.plan-header .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.plan-header .actions { display: flex; gap: 6px; }
+.tab-short { display: none; }
+@media (max-width: 640px) {
+  .tab-long { display: none; }
+  .tab-short { display: inline; }
+}
+.scenario-sliders summary { cursor: pointer; padding: 4px 0; }
+@media (max-width: 640px) {
+  .scenario-sliders summary { min-height: 36px; display: flex; align-items: center; }
+}
+.currency-pick { flex-wrap: nowrap; }
+.currency-pick select { width: auto; max-width: 100%; }
+@media (max-width: 640px) {
+  .currency-pick { flex-wrap: wrap; width: 100%; }
+  .currency-pick select { width: 100%; }
+  /* Bouton de suppression d'une ligne : coin supérieur droit de sa carte */
+  table.cards tr { position: relative; }
+  table.cards td:first-child { padding-right: 52px; }
+  table.cards td.actions { position: absolute; top: 8px; right: 8px; grid-column: auto; }
+  table.cards td.actions .btn { min-height: 36px; min-width: 36px; padding: 4px 8px; }
+  table.cards tr.total td:first-child { padding-right: 0; }
+  /* Pas de carte dans la carte : les lignes prennent toute la largeur du bloc */
+  .card table.cards tr { margin-left: -4px; margin-right: -4px; }
+}
+@media (max-width: 640px) {
+  table.cards td[data-label="Note"], table.cards td[data-label^="Mitigation"] { grid-column: 1 / -1; }
+}

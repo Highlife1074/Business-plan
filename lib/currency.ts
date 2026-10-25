@@ -28,7 +28,8 @@ export const CURRENCIES: { code: string; label: string }[] = [
 // (prix, charges, salaires, investissements, financement, devis, estimations).
 // Les pourcentages, volumes et durées ne changent pas.
 export function convertPlan(plan: Plan, to: string, rate: number): Plan {
-  const r = (v: number) => Math.round(v * rate * 100) / 100;
+  // 4 décimales : un prix ou un coût unitaire converti (ex. 0,225 €) ne doit pas être arrondi au centime
+  const r = (v: number) => Math.round(v * rate * 10000) / 10000;
   const p = plan.params;
   return {
     ...plan,
@@ -36,6 +37,7 @@ export function convertPlan(plan: Plan, to: string, rate: number): Plan {
     params: {
       ...p,
       revenueStreams: p.revenueStreams.map((s) => ({ ...s, unitPrice: r(s.unitPrice) })),
+      variableCosts: (p.variableCosts ?? []).map((v) => (v.mode === "unit" ? { ...v, value: r(v.value) } : v)),
       fixedCosts: p.fixedCosts.map((c) => ({ ...c, monthly: r(c.monthly) })),
       staff: p.staff.map((s) => ({ ...s, grossMonthly: r(s.grossMonthly) })),
       investments: p.investments.map((i) => ({ ...i, amount: r(i.amount) })),

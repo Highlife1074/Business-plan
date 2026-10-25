@@ -175,9 +175,9 @@ export function CurrencyBar() {
   return (
     <div className="card no-print" style={{ padding: "10px 16px" }}>
       <div className="row" style={{ justifyContent: "space-between" }}>
-        <label className="row small" style={{ gap: 6, flexWrap: "nowrap" }}>
+        <label className="row small currency-pick" style={{ gap: 6 }}>
           <span className="muted">Afficher les montants en</span>
-          <select style={{ width: "auto" }} value={c.requested} onChange={(e) => c.setDisplay(e.target.value)}>
+          <select value={c.requested} onChange={(e) => c.setDisplay(e.target.value)}>
             {c.options.map((o) => (
               <option key={o.code} value={o.code}>
                 {o.code} — {o.label}
