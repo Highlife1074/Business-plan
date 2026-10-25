@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Champ numérique : garde la saisie en texte pour permettre "12," ou "-" pendant la frappe.
 export function Num({
@@ -69,10 +69,11 @@ export function StringList({
     <div className="list-edit">
       {items.map((it, i) => (
         <div className="item" key={i}>
-          <input
+          <AutoText
+            singleLine
             value={it}
             placeholder={placeholder}
-            onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))}
+            onChange={(v) => onChange(items.map((x, j) => (j === i ? v : x)))}
           />
           <button className="btn sm" title="Supprimer" onClick={() => onChange(items.filter((_, j) => j !== i))}>
             ✕
@@ -123,4 +124,58 @@ export function useChartColors() {
     return () => mq.removeEventListener("change", read);
   }, []);
   return colors;
+}
+
+// Champ de texte qui s'agrandit pour afficher tout son contenu (retour à la ligne automatique).
+// singleLine : pas de saut de ligne (libellés, notes) — le texte passe simplement à la ligne à l'écran.
+export function AutoText({
+  value,
+  onChange,
+  placeholder,
+  singleLine = false,
+  minRows = 1,
+  className = "",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  singleLine?: boolean;
+  minRows?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const fit = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + 2}px`;
+  };
+  useLayoutEffect(() => {
+    fit();
+  }, [value]);
+  // Réajuste quand la largeur change (rotation de l'écran, passage en cartes…)
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let width = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== width) {
+        width = el.clientWidth;
+        fit();
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <textarea
+      ref={ref}
+      rows={minRows}
+      className={`autotext ${singleLine ? "single" : ""} ${className}`}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(singleLine ? e.target.value.replace(/\s*\n\s*/g, " ") : e.target.value)}
+      onKeyDown={singleLine ? (e) => e.key === "Enter" && e.preventDefault() : undefined}
+    />
+  );
 }

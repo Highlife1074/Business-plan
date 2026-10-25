@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Num } from "./ui";
+import { AutoText, Num } from "./ui";
 import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { Outreach, OutreachMessage, Plan, QuoteNeed, Sender, Supplier } from "@/lib/types";
@@ -419,11 +419,11 @@ function SupplierRow({
         <div style={{ marginTop: 8 }}>
           <label className="field">
             Objet
-            <input value={o!.subject} onChange={(e) => onOutreach((x) => ({ ...x, subject: e.target.value }))} />
+            <AutoText singleLine value={o!.subject} onChange={(v) => onOutreach((x) => ({ ...x, subject: v }))} />
           </label>
           <label className="field" style={{ marginTop: 6 }}>
             Message ({o!.draftKind === "relance" ? "relance" : "demande de devis"}) — relisez et modifiez avant l&apos;envoi
-            <textarea rows={12} value={o!.draft} onChange={(e) => onOutreach((x) => ({ ...x, draft: e.target.value }))} />
+            <AutoText minRows={8} value={o!.draft} onChange={(v) => onOutreach((x) => ({ ...x, draft: v }))} />
           </label>
           <div className="row" style={{ marginTop: 8 }}>
             <button className="btn primary" disabled={Boolean(busy[`send-${o!.id}`])} onClick={() => onSend(o!)}>

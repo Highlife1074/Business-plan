@@ -269,3 +269,18 @@ button, a, select, input[type="range"] { touch-action: manipulation; }
 @media (max-width: 640px) {
   table.cards td[data-label="Note"], table.cards td[data-label^="Mitigation"] { grid-column: 1 / -1; }
 }
+
+/* Champs de texte qui s'agrandissent avec leur contenu : tout le texte reste visible */
+textarea.autotext { resize: none; overflow: hidden; min-height: 0; line-height: 1.4; display: block; }
+textarea.autotext.single { min-height: 36px; }
+.legal-head { flex-wrap: nowrap; }
+.legal-head > div:first-child { flex: 1; min-width: 0; }
+@media (max-width: 640px) {
+  textarea.autotext.single { min-height: 44px; }
+  /* Listes déroulantes et zones de texte sur toute la largeur de la carte pour lire leur contenu */
+  table.cards td:has(select), table.cards td:has(textarea.autotext) { grid-column: 1 / -1; }
+  .grid-kpi > label.field:has(select), .grid-kpi > label.field:has(textarea) { grid-column: 1 / -1; }
+  .legal-head { flex-wrap: wrap; }
+  .legal-head > div:first-child { flex-basis: 100%; }
+  .list-edit .item { align-items: flex-start; }
+}

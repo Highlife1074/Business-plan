@@ -4,7 +4,7 @@ import EditTable from "./EditTable";
 import ScenarioBar from "./ScenarioBar";
 import VariableCostsCard from "./VariableCostsCard";
 import { MoneyNum, RateStatus, useMoney } from "./CurrencyProvider";
-import { Num } from "./ui";
+import { AutoText, Num } from "./ui";
 import type { TabProps } from "./tab";
 import type { FixedCost, Investment, Loan, Params, RevenueStream, StaffLine } from "@/lib/types";
 import { applyQuotes } from "@/lib/finance";
@@ -55,7 +55,7 @@ export default function ParamsTab({ plan, proj, update, askClaude }: TabProps) {
         <div className="grid grid-kpi">
           <label className="field">
             Nom du projet
-            <input value={plan.meta.name} onChange={(e) => update((pl) => ({ ...pl, meta: { ...pl.meta, name: e.target.value } }))} />
+            <AutoText singleLine value={plan.meta.name} onChange={(v) => update((pl) => ({ ...pl, meta: { ...pl.meta, name: v } }))} />
           </label>
           <label className="field">
             Devise des montants

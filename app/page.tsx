@@ -9,6 +9,7 @@ import { demoPlan } from "@/lib/demo";
 import { uid } from "@/lib/uid";
 import { generatePlan } from "@/lib/claude";
 import KeySettings from "@/components/KeySettings";
+import { AutoText } from "@/components/ui";
 import { useCloud } from "@/components/CloudProvider";
 
 const EXAMPLES = ["Lavage auto", "Pizzeria", "Boulangerie", "Salle de sport", "Food truck", "Coworking"];
@@ -111,7 +112,7 @@ export default function Home() {
         </div>
         <label className="field" style={{ marginTop: 12 }}>
           Précisions (concept, taille, emplacement, contraintes…)
-          <textarea value={form.details} onChange={set("details")} placeholder="ex. 40 couverts, four à bois, livraison via applis, local de 120 m² en centre-ville" />
+          <AutoText minRows={3} value={form.details} onChange={(v) => setForm({ ...form, details: v })} placeholder="ex. 40 couverts, four à bois, livraison via applis, local de 120 m² en centre-ville" />
         </label>
         <div className="row" style={{ marginTop: 12 }}>
           <button className="btn primary" disabled={busy}>

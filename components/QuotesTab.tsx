@@ -1,7 +1,7 @@
 "use client";
 
 import EditTable from "./EditTable";
-import { Num } from "./ui";
+import { AutoText, Num } from "./ui";
 import { MoneyNum, useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
 import type { Quote, QuoteNeed, QuoteStatus } from "@/lib/types";
@@ -134,8 +134,8 @@ export default function QuotesTab({ plan, update, askClaude }: TabProps) {
               </div>
             </div>
             <div className="grid grid-kpi">
-              <label className="field">Fournisseur<input value={q.supplier} onChange={(e) => setQuote(q.id, { supplier: e.target.value })} /></label>
-              <label className="field">Objet<input value={q.label} onChange={(e) => setQuote(q.id, { label: e.target.value })} /></label>
+              <label className="field">Fournisseur<AutoText singleLine value={q.supplier} onChange={(v) => setQuote(q.id, { supplier: v })} /></label>
+              <label className="field">Objet<AutoText singleLine value={q.label} onChange={(v) => setQuote(q.id, { label: v })} /></label>
               <label className="field">
                 Type
                 <select value={q.kind} onChange={(e) => setQuote(q.id, { kind: e.target.value as Quote["kind"], linkedId: null })}>
@@ -159,11 +159,11 @@ export default function QuotesTab({ plan, update, askClaude }: TabProps) {
               </label>
               <label className="field">Date<input type="date" value={q.date} onChange={(e) => setQuote(q.id, { date: e.target.value })} /></label>
               <label className="field">Valable jusqu&apos;au<input type="date" value={q.validUntil} onChange={(e) => setQuote(q.id, { validUntil: e.target.value })} /></label>
-              <label className="field">Contact<input value={q.contact} onChange={(e) => setQuote(q.id, { contact: e.target.value })} placeholder="nom, e-mail, téléphone" /></label>
+              <label className="field">Contact<AutoText singleLine value={q.contact} onChange={(v) => setQuote(q.id, { contact: v })} placeholder="nom, e-mail, téléphone" /></label>
             </div>
             <label className="field" style={{ marginTop: 8 }}>
               Notes (conditions, délais, garanties, options…)
-              <textarea rows={2} value={q.notes} onChange={(e) => setQuote(q.id, { notes: e.target.value })} />
+              <AutoText minRows={2} value={q.notes} onChange={(v) => setQuote(q.id, { notes: v })} />
             </label>
           </div>
         );
