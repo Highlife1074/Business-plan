@@ -1,6 +1,6 @@
 "use client";
 
-import { Num } from "./ui";
+import { AutoText, Num } from "./ui";
 import { MoneyNum, useMoney } from "./CurrencyProvider";
 import { uid } from "@/lib/uid";
 
@@ -83,5 +83,5 @@ function TextCell({ value, onChange }: { value: string; onChange: (v: string) =>
   if (shown !== value) {
     return <div className="converted-text small" title={`Montants convertis — repassez en ${base} pour modifier`}>{shown}</div>;
   }
-  return <input value={value} onChange={(e) => onChange(e.target.value)} />;
+  return <AutoText singleLine value={value} onChange={onChange} />;
 }

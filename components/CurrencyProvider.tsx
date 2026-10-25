@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { CURRENCIES, convertPlan, convertText, fetchRates, manualRate, setManualRate } from "@/lib/currency";
 import { money, num } from "@/lib/format";
-import { Num } from "./ui";
+import { AutoText, Num } from "./ui";
 import type { Plan } from "@/lib/types";
 
 // Devise d'affichage d'un plan : les montants restent enregistrés et calculés dans la devise du plan,
@@ -66,9 +66,9 @@ export function ConvertibleText({
     );
   }
   return multiline ? (
-    <textarea rows={rows} value={value} onChange={(e) => onChange(e.target.value)} />
+    <AutoText minRows={rows} value={value} onChange={onChange} />
   ) : (
-    <input value={value} onChange={(e) => onChange(e.target.value)} />
+    <AutoText singleLine value={value} onChange={onChange} />
   );
 }
 

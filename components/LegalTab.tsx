@@ -30,7 +30,7 @@ export default function LegalTab({ plan, update, askClaude }: TabProps) {
       </div>
       {items.map((it) => (
         <div className="card" key={it.id}>
-          <div className="row" style={{ flexWrap: "nowrap", marginBottom: 8 }}>
+          <div className="row legal-head" style={{ marginBottom: 8 }}>
             <div style={{ flex: 1, fontWeight: 600 }}>
               <ConvertibleText
                 multiline={false}

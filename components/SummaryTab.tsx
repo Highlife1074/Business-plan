@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
-import { Kpi, useChartColors } from "./ui";
+import { AutoText, Kpi, useChartColors } from "./ui";
 import ScenarioBar from "./ScenarioBar";
 import { useMoney } from "./CurrencyProvider";
 import type { TabProps } from "./tab";
@@ -112,10 +112,10 @@ export default function SummaryTab({ plan, proj, update, askClaude }: TabProps) 
           </div>
         </div>
         {editing ? (
-          <textarea
-            rows={12}
+          <AutoText
+            minRows={8}
             value={plan.texts.summary}
-            onChange={(e) => update((p) => ({ ...p, texts: { ...p.texts, summary: e.target.value } }))}
+            onChange={(v) => update((p) => ({ ...p, texts: { ...p.texts, summary: v } }))}
           />
         ) : (
           ct(plan.texts.summary).split(/\n\s*\n/).map((para, i) => <p key={i}>{para}</p>)

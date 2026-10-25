@@ -1,7 +1,7 @@
 "use client";
 
 import { MoneyNum, useMoney } from "./CurrencyProvider";
-import { Num } from "./ui";
+import { AutoText, Num } from "./ui";
 import type { Params, VariableCost } from "@/lib/types";
 import { num } from "@/lib/format";
 import { uid } from "@/lib/uid";
@@ -65,7 +65,7 @@ export default function VariableCostsCard({
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td data-label="Charge"><input value={r.label} onChange={(e) => set(r.id, { label: e.target.value })} /></td>
+                <td data-label="Charge"><AutoText singleLine value={r.label} onChange={(v) => set(r.id, { label: v })} /></td>
                 <td data-label="Calcul">
                   <select value={r.mode} onChange={(e) => set(r.id, { mode: e.target.value as VariableCost["mode"] })}>
                     <option value="pct">% du CA</option>
@@ -90,7 +90,7 @@ export default function VariableCostsCard({
                   </select>
                 </td>
                 <td data-label="≈ / mois">{fmt(monthly(r))}</td>
-                <td data-label="Note" style={{ minWidth: 180 }}><input value={r.note} onChange={(e) => set(r.id, { note: e.target.value })} /></td>
+                <td data-label="Note" style={{ minWidth: 180 }}><AutoText singleLine value={r.note} onChange={(v) => set(r.id, { note: v })} /></td>
                 <td className="actions">
                   <button className="btn sm" title="Supprimer" onClick={() => setRows(rows.filter((x) => x.id !== r.id))}>✕</button>
                 </td>
