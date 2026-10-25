@@ -300,3 +300,6 @@ textarea.autotext.single { min-height: 36px; }
   .grid-kpi > .span-2 { grid-column: span 2; }
   .swot { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
 }
+@media (min-width: 641px) and (max-width: 1400px) {
+  table.edit td.col-select select { max-width: 210px; }
+}
