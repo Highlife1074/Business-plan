@@ -57,7 +57,7 @@ export default function SwotTab({ plan, update, askClaude }: TabProps) {
             { key: "risk", label: "Risque", type: "text" },
             { key: "probability", label: "Probabilité", type: "select", options: LEVELS },
             { key: "impact", label: "Impact", type: "select", options: LEVELS },
-            { key: "mitigation", label: "Mitigation", type: "text", width: 260 },
+            { key: "mitigation", label: "Mitigation", type: "text", width: 460 },
           ]}
           rowExtra={(r) => {
             const s = score(r.probability) * score(r.impact);

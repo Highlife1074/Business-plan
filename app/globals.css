@@ -284,3 +284,19 @@ textarea.autotext.single { min-height: 36px; }
   .legal-head > div:first-child { flex-basis: 100%; }
   .list-edit .item { align-items: flex-start; }
 }
+
+/* ===== Ordinateur : contenu plus large, colonnes de texte prioritaires ===== */
+@media (min-width: 641px) {
+  .container { max-width: min(1680px, 96vw); padding-left: 24px; padding-right: 24px; }
+  /* Colonnes de chiffres et de listes au plus juste, le reste de la largeur pour les libellés et notes */
+  table.edit { table-layout: auto; }
+  table.edit td.col-number, table.edit td.col-money, table.edit td.col-select { width: 1%; }
+  table.edit td.col-number input, table.edit td.col-money input { width: 104px; min-width: 104px; }
+  table.edit td.col-select select { width: auto; min-width: 130px; max-width: 260px; }
+  table.edit td.col-text { min-width: 200px; }
+  table.edit td:first-child { min-width: clamp(240px, 20vw, 380px); }
+  table.edit td.col-short { width: 1%; }
+  table.edit td.col-select select { max-width: 270px; }
+  .grid-kpi > .span-2 { grid-column: span 2; }
+  .swot { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+}

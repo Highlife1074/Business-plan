@@ -43,7 +43,13 @@ export default function EditTable<T extends { id: string }>({
           {rows.map((r) => (
             <tr key={r.id}>
               {columns.map((c) => (
-                <td key={c.key} data-label={c.label} style={c.width ? { minWidth: c.width } : undefined}>
+                <td
+                  key={c.key}
+                  data-label={c.label}
+                  // largeur < 150 px : colonne courte de largeur fixe (ex. unité) ; sinon largeur minimale
+                  className={`col-${c.type}${c.width && c.width < 150 ? " col-short" : ""}`}
+                  style={c.width ? (c.width < 150 ? { width: c.width, minWidth: c.width } : { minWidth: c.width }) : undefined}
+                >
                   {c.type === "money" ? (
                     <MoneyNum value={r[c.key] as number} onChange={(v) => set(r.id, c.key, v)} />
                   ) : c.type === "number" ? (
