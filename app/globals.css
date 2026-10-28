@@ -303,3 +303,39 @@ textarea.autotext.single { min-height: 36px; }
 @media (min-width: 641px) and (max-width: 1400px) {
   table.edit td.col-select select { max-width: 210px; }
 }
+
+/* Fiche récap */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+.status-icon { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #fff; font-size: 0.75rem; font-weight: 700; flex: none; }
+.status.good { color: var(--pos); } .status.good .status-icon { background: var(--pos); }
+.status.warn { color: var(--warn); } .status.warn .status-icon { background: var(--warn); }
+.status.bad { color: var(--neg); } .status.bad .status-icon { background: var(--neg); }
+.status.none { width: 20px; justify-content: center; color: var(--muted); }
+.recap-head { display: flex; gap: 20px; align-items: center; border-left: 6px solid var(--pos); }
+.recap-head.tone-warn { border-left-color: var(--warn); }
+.recap-head.tone-bad { border-left-color: var(--neg); }
+.recap-head .grow { flex: 1; min-width: 0; }
+.recap-score { display: flex; align-items: baseline; gap: 4px; }
+.recap-score .score { font-size: 2.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.recap-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.recap-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border: 1px solid var(--border); border-radius: 999px; color: var(--text); text-decoration: none; font-size: 0.85rem; background: var(--surface-2); }
+.recap-pill .status { font-size: 0; gap: 0; }
+.recap-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 16px; }
+.recap-grid .card { margin: 0; }
+.recap-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.recap-group-head h3 { margin: 0; }
+.recap-items { margin: 0; display: flex; flex-direction: column; }
+.recap-item { padding: 8px 0; border-top: 1px solid var(--border); }
+.recap-item dt { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.85rem; }
+.recap-item dd { margin: 2px 0 0 28px; display: flex; flex-direction: column; }
+.recap-item dd strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+@media (min-width: 1100px) { .recap-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px) {
+  .recap-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .recap-grid { grid-template-columns: 1fr; }
+}
+@media print { .recap-grid { grid-template-columns: repeat(3, 1fr); } .recap-pills { display: none; } }
+.grid-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 16px; }
+.grid-charts .card { margin: 0; }
+@media (max-width: 900px) { .grid-charts { grid-template-columns: 1fr; } }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import FinTable, { type FinLine } from "./FinTable";
 import ScenarioBar from "./ScenarioBar";
 import { useMoney } from "./CurrencyProvider";
+import { CostStructureChart, MarginsChart } from "./Charts";
 import type { TabProps } from "./tab";
 import type { MonthRow, YearRow } from "@/lib/finance";
 import { pct } from "@/lib/format";
@@ -67,6 +68,16 @@ export default function IncomeTab({ plan, proj, update, askClaude }: TabProps) {
           </button>
         </div>
         <FinTable columns={proj.years} headers={proj.years.map((y) => `Année ${y.year}`)} lines={yearLines} />
+      </div>
+      <div className="grid grid-charts">
+        <div className="card">
+          <h2>Structure des charges</h2>
+          <CostStructureChart proj={proj} />
+        </div>
+        <div className="card">
+          <h2>Taux de marge</h2>
+          <MarginsChart proj={proj} />
+        </div>
       </div>
       <div className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>

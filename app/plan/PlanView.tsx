@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Plan } from "@/lib/types";
 import { getPlan, savePlan } from "@/lib/storage";
 import { projectPlan } from "@/lib/finance";
+import RecapTab from "@/components/RecapTab";
 import SummaryTab from "@/components/SummaryTab";
 import ParamsTab from "@/components/ParamsTab";
 import IncomeTab from "@/components/IncomeTab";
@@ -20,6 +21,7 @@ import { useCloud } from "@/components/CloudProvider";
 import CurrencyProvider, { CurrencyBar, DisplayCurrency } from "@/components/CurrencyProvider";
 
 const TABS = [
+  { id: "recap", label: "Fiche récap", short: "Récap", C: RecapTab },
   { id: "summary", label: "Sommaire", short: "Sommaire", C: SummaryTab },
   { id: "params", label: "Paramètres", short: "Paramètres", C: ParamsTab },
   { id: "income", label: "Résultats d'exploitation", short: "Résultats", C: IncomeTab },
@@ -36,7 +38,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function PlanView({ id }: { id: string }) {
   const [plan, setPlan] = useState<Plan | null | undefined>(undefined);
-  const [tab, setTab] = useState<TabId>("summary");
+  const [tab, setTab] = useState<TabId>("recap");
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
 
   const { version, syncing, ready } = useCloud();
