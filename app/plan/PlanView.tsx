@@ -15,6 +15,7 @@ import SwotTab from "@/components/SwotTab";
 import QuotesTab from "@/components/QuotesTab";
 import AssistantTab from "@/components/AssistantTab";
 import OutreachTab from "@/components/OutreachTab";
+import ConsultationsTab from "@/components/ConsultationsTab";
 import type { TabProps } from "@/components/tab";
 import { useCloud } from "@/components/CloudProvider";
 import CurrencyProvider, { CurrencyBar, DisplayCurrency } from "@/components/CurrencyProvider";
@@ -29,6 +30,7 @@ const TABS = [
   { id: "swot", label: "SWOT & risques", short: "SWOT", C: SwotTab },
   { id: "quotes", label: "Devis", short: "Devis", C: QuotesTab },
   { id: "outreach", label: "Démarches", short: "Démarches", C: OutreachTab },
+  { id: "consultations", label: "Suivi des consultations", short: "Suivi", C: ConsultationsTab },
   { id: "assistant", label: "Assistant Claude", short: "Assistant", C: AssistantTab },
 ] as const;
 

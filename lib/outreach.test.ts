@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { followUpDue, newReplies } from "./outreach.ts";
+import { followUpDue, logEvent, newReplies, removeEvent, summarize } from "./outreach.ts";
 import type { Outreach, Sender } from "./types";
 
 const sender: Sender = { name: "", company: "", phone: "", email: "", followUpDays: 5, maxFollowUps: 2 };
@@ -32,4 +32,30 @@ test("seules les nouvelles réponses du fournisseur sont retenues", () => {
   const r = newReplies(o, thread);
   assert.deepEqual(r.map((m) => m.gmailId), ["g3"]);
   assert.equal(r[0].direction, "reçu");
+});
+
+test("échanges notés à la main : demande, relance puis retour", () => {
+  const draft = { ...base, status: "brouillon" as const, threadId: null, lastSentAt: null };
+  let o = logEvent(draft, { kind: "demande", date: "2027-01-01T12:00:00Z", channel: "téléphone", note: "appel" }, "1");
+  assert.equal(o.status, "envoyé");
+  assert.equal(o.lastSentAt, "2027-01-01T12:00:00Z");
+  assert.equal(summarize(o, sender).nextFollowUpAt, "2027-01-06T12:00:00.000Z");
+  o = logEvent(o, { kind: "relance", date: "2027-01-07T12:00:00Z", channel: "e-mail", note: "" }, "2");
+  assert.equal(o.status, "relancé");
+  assert.equal(o.followUps, 1);
+  o = logEvent(o, { kind: "réponse", date: "2027-01-10T12:00:00Z", channel: "e-mail", note: "offre à 900" }, "3");
+  assert.equal(o.status, "réponse reçue");
+  const s = summarize(o, sender);
+  assert.equal(s.requestedAt, "2027-01-01T12:00:00Z");
+  assert.deepEqual(s.followUpDates, ["2027-01-07T12:00:00Z"]);
+  assert.equal(s.replyDelayDays, 9);
+  assert.equal(s.nextFollowUpAt, null);
+  // Suppression du retour : la consultation repasse en attente
+  o = removeEvent(o, "log-3");
+  assert.equal(o.status, "relancé");
+});
+
+test("un retour négatif clôt la consultation", () => {
+  const o = logEvent(base, { kind: "réponse", date: "2027-01-03T12:00:00Z", channel: "téléphone", note: "", declined: true }, "x");
+  assert.equal(o.status, "clos");
 });

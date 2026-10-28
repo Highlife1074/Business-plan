@@ -13,7 +13,7 @@ import { uid } from "@/lib/uid";
 
 const BLANK_SUPPLIER = { name: "", email: "", website: "", phone: "", city: "", notes: "" };
 
-function newOutreach(supplier: Supplier): Outreach {
+export function newOutreach(supplier: Supplier): Outreach {
   return {
     id: uid(),
     supplierId: supplier.id,

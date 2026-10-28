@@ -152,6 +152,7 @@ export interface OutreachMessage {
   body: string;
   date: string; // ISO
   gmailId: string | null;
+  channel?: string; // échange noté à la main (téléphone, rendez-vous…) ; absent pour Gmail
 }
 
 export type OutreachStatus = "brouillon" | "envoyé" | "relancé" | "réponse reçue" | "devis enregistré" | "clos";

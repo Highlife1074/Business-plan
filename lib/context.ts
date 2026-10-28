@@ -1,5 +1,6 @@
 import type { Plan } from "./types";
 import type { Projection } from "./finance";
+import { summarize } from "./outreach";
 
 // Contexte envoyé à l'assistant Claude : hypothèses (avec les identifiants des lignes, utilisés
 // par l'outil modifier_plan), résultats calculés et analyses. Montants dans la devise du plan.
@@ -29,6 +30,23 @@ export function planContext(plan: Plan, proj: Projection): string {
     type: q.kind,
     statut: q.status,
   }));
+  const day = (iso: string | null) => iso?.slice(0, 10) ?? null;
+  const consultations = plan.outreach
+    .filter((o) => o.messages.length > 0)
+    .map((o) => {
+      const supplier = plan.suppliers.find((s) => s.id === o.supplierId);
+      const s = summarize(o, plan.sender);
+      return {
+        fournisseur: supplier?.name,
+        objet: plan.quoteNeeds.find((n) => n.id === supplier?.needId)?.item,
+        statut: o.status,
+        demandeEnvoyee: day(s.requestedAt),
+        relances: s.followUpDates.map(day),
+        dernierRetour: day(s.lastReplyAt),
+        delaiRetourJours: s.replyDelayDays,
+        prochaineRelance: day(s.nextFollowUpAt),
+      };
+    });
   return JSON.stringify(
     {
       projet: plan.meta,
@@ -47,6 +65,7 @@ export function planContext(plan: Plan, proj: Projection): string {
       },
       devis: quotes,
       devisAObtenir: plan.quoteNeeds,
+      suiviConsultations: consultations,
     },
     null,
     1,
