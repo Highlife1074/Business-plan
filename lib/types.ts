@@ -215,6 +215,7 @@ export interface Plan {
   meta: {
     name: string;
     businessType: string;
+    sector?: string; // profil de la fiche récap (lib/sectors.ts) ; absent : détecté d'après businessType
     country: string;
     city: string;
     currency: string; // code ISO 4217

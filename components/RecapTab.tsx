@@ -7,6 +7,7 @@ import { CashChart, PaybackChart } from "./Charts";
 import type { TabProps } from "./tab";
 import { applyQuotes } from "@/lib/finance";
 import { buildRecap, type Tone } from "@/lib/recap";
+import { ALL_SECTORS, detectSector, sectorFor } from "@/lib/sectors";
 import { num } from "@/lib/format";
 
 const STATUS: Record<Tone, { icon: string; label: string }> = {
@@ -29,7 +30,11 @@ function Status({ tone, withLabel = false }: { tone: Tone; withLabel?: boolean }
 export default function RecapTab({ plan, proj, update }: TabProps) {
   const { fmt } = useMoney();
   const params = useMemo(() => applyQuotes(plan.params, plan.quotes), [plan.params, plan.quotes]);
-  const recap = useMemo(() => buildRecap(params, proj, (v) => fmt(v)), [params, proj, fmt]);
+  const sector = sectorFor(plan.meta);
+  const detected = detectSector(plan.meta.businessType);
+  const recap = useMemo(() => buildRecap(params, proj, (v) => fmt(v), sector), [params, proj, fmt, sector]);
+  const setSector = (id: string) =>
+    update((p) => ({ ...p, meta: { ...p.meta, sector: id === "auto" ? undefined : id } }));
 
   return (
     <>
@@ -51,6 +56,17 @@ export default function RecapTab({ plan, proj, update }: TabProps) {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="card recap-sector">
+        <label className="row small" style={{ gap: 6 }}>
+          <span className="muted">Repères du secteur</span>
+          <select value={plan.meta.sector ?? "auto"} onChange={(e) => setSector(e.target.value)}>
+            <option value="auto">Automatique : {detected.label}</option>
+            {ALL_SECTORS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </label>
+        <p className="muted small" style={{ margin: "6px 0 0" }}>{sector.note}</p>
       </div>
 
       <div className="recap-grid">
@@ -92,7 +108,7 @@ export default function RecapTab({ plan, proj, update }: TabProps) {
         </div>
       </div>
       <p className="muted small">
-        Repères indicatifs (usages bancaires courants). ✓ OK · ! À surveiller · ✕ Critique. Le détail de chaque critère est dans les onglets Résultats, Trésorerie et Point mort.
+        Repères indicatifs ({sector.label.toLowerCase()} : ratios sectoriels et usages bancaires courants). ✓ OK · ! À surveiller · ✕ Critique. Le détail de chaque critère est dans les onglets Résultats, Trésorerie et Point mort.
       </p>
     </>
   );
