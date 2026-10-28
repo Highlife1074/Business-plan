@@ -8,7 +8,7 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 
 | Onglet | Contenu |
 |---|---|
-| **Fiche récap** | Lecture simplifiée sur une page : note globale sur 10, verdict, et critères regroupés en 6 thèmes (financement, activité, rentabilité, trésorerie, point mort et sécurité, retour sur investissement), chacun avec un feu ✓ / ! / ✕ et le repère attendu ; courbes de trésorerie et de retour sur investissement |
+| **Fiche récap** | Lecture simplifiée sur une page : note globale sur 10, verdict, et critères regroupés en 6 thèmes (financement, activité, rentabilité, trésorerie, point mort et sécurité, retour sur investissement), chacun avec un feu ✓ / ! / ✕ et le repère attendu. **Les repères dépendent du secteur** (détecté d'après le type d'activité, modifiable) : start-up / tech, restauration, hôtellerie, services avec équipements (lavage auto, laverie…), industrie, commerce, conseil, ou général ; courbes de trésorerie et de retour sur investissement |
 | **Sommaire** | Vue macro : alertes, 4 chiffres clés, courbes (activité et rentabilité, CA et charges par mois, trésorerie, retour sur investissement), synthèse, SWOT résumé |
 | **Paramètres** | Toutes les hypothèses modifiables : généraux (TVA, IS, charges sociales, inflation), saisonnalité, montée en charge, lignes de chiffre d'affaires, **charges variables** (en % du CA ou par unité vendue, pour toutes les lignes ou une seule), charges fixes, personnel, investissements, financement (apport, subventions, prêts avec différé) |
 | **Résultats d'exploitation** | Compte de résultat prévisionnel annuel + détail mensuel, avec le détail de chaque charge variable ; graphiques de structure des charges et des taux de marge |

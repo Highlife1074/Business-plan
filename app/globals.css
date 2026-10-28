@@ -339,3 +339,6 @@ textarea.autotext.single { min-height: 36px; }
 .grid-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 16px; }
 .grid-charts .card { margin: 0; }
 @media (max-width: 900px) { .grid-charts { grid-template-columns: 1fr; } }
+.recap-sector { padding: 10px 16px; }
+.recap-sector select { width: auto; max-width: 100%; }
+@media (max-width: 640px) { .recap-sector label { flex-wrap: wrap; } .recap-sector select { width: 100%; } }
