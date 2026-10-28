@@ -1,21 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import FinTable, { type FinLine } from "./FinTable";
 import ScenarioBar from "./ScenarioBar";
 import { useMoney } from "./CurrencyProvider";
-import { useChartColors } from "./ui";
+import { CashChart, CashFlowChart } from "./Charts";
 import type { TabProps } from "./tab";
 import type { MonthRow } from "@/lib/finance";
 import { applyQuotes } from "@/lib/finance";
 import { monthName } from "@/lib/format";
 
 export default function CashTab({ plan, proj, update }: TabProps) {
-  const cur = plan.meta.currency;
   const { fmt } = useMoney();
   const m = (v: number) => fmt(v);
-  const c = useChartColors();
   const [detailYear, setDetailYear] = useState(1);
   const params = applyQuotes(plan.params, plan.quotes);
 
@@ -50,8 +47,6 @@ export default function CashTab({ plan, proj, update }: TabProps) {
     } as MonthRow;
   });
   const months = proj.months.filter((r) => r.year === detailYear);
-  const data = proj.months.map((r) => ({ name: r.label, Trésorerie: Math.round(r.cashBalance) }));
-  const axis = { stroke: c.muted, fontSize: 12 };
 
   const loans = params.financing.loans;
   const totalLoans = loans.reduce((a, l) => a + l.amount, 0);
@@ -96,18 +91,13 @@ export default function CashTab({ plan, proj, update }: TabProps) {
           Point bas : <strong className={proj.indicators.minCash < 0 ? "neg" : ""}>{m(proj.indicators.minCash)}</strong> en {monthName(proj.indicators.minCashMonth)}.
           Montants HT : la TVA collectée est reversée et n&apos;est pas modélisée.
         </p>
-        <div className="chart">
-          <ResponsiveContainer>
-            <AreaChart data={data}>
-              <CartesianGrid stroke={c.border} vertical={false} />
-              <XAxis dataKey="name" tick={axis} stroke={c.border} interval={11} />
-              <YAxis tick={axis} stroke={c.border} tickFormatter={(v) => fmt(v, true)} width={70} />
-              <Tooltip contentStyle={{ background: c.surface, border: `1px solid ${c.border}`, color: c.text }} formatter={(v) => m(Number(v))} />
-              <ReferenceLine y={0} stroke={c.neg} strokeDasharray="4 4" />
-              <Area type="monotone" dataKey="Trésorerie" stroke={c.c2} fill={c.c2} fillOpacity={0.15} strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <CashChart proj={proj} />
+      </div>
+
+      <div className="card">
+        <h2>Encaissements et décaissements d&apos;exploitation</h2>
+        <p className="muted small">Par mois, hors apport, emprunts, subventions et investissement de départ.</p>
+        <CashFlowChart proj={proj} />
       </div>
 
       <div className="card">

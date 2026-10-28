@@ -8,11 +8,12 @@ Vous ajustez ensuite chaque paramètre, et **tout le document se recalcule** : s
 
 | Onglet | Contenu |
 |---|---|
-| **Sommaire** | Vue macro : alertes, indicateurs clés (investissement, CA, EBE, résultat net, point mort, trésorerie min., retour sur investissement, VAN/TRI), graphiques, synthèse, SWOT résumé |
+| **Fiche récap** | Lecture simplifiée sur une page : note globale sur 10, verdict, et critères regroupés en 6 thèmes (financement, activité, rentabilité, trésorerie, point mort et sécurité, retour sur investissement), chacun avec un feu ✓ / ! / ✕ et le repère attendu ; courbes de trésorerie et de retour sur investissement |
+| **Sommaire** | Vue macro : alertes, 4 chiffres clés, courbes (activité et rentabilité, CA et charges par mois, trésorerie, retour sur investissement), synthèse, SWOT résumé |
 | **Paramètres** | Toutes les hypothèses modifiables : généraux (TVA, IS, charges sociales, inflation), saisonnalité, montée en charge, lignes de chiffre d'affaires, **charges variables** (en % du CA ou par unité vendue, pour toutes les lignes ou une seule), charges fixes, personnel, investissements, financement (apport, subventions, prêts avec différé) |
-| **Résultats d'exploitation** | Compte de résultat prévisionnel annuel + détail mensuel, avec le détail de chaque charge variable |
-| **Trésorerie** | Plan de financement initial, courbe de trésorerie, tableaux annuel et mensuel des encaissements / décaissements |
-| **Point mort** | Seuil de rentabilité, point mort en jours et date, marge de sécurité, volumes nécessaires par jour |
+| **Résultats d'exploitation** | Compte de résultat prévisionnel annuel + détail mensuel, avec le détail de chaque charge variable ; graphiques de structure des charges et des taux de marge |
+| **Trésorerie** | Plan de financement initial, courbe de trésorerie, courbe des encaissements / décaissements d'exploitation, tableaux annuel et mensuel |
+| **Point mort** | Seuil de rentabilité, courbe du point mort (CA et charges totales selon le niveau d'activité), point mort en jours et date, marge de sécurité, volumes nécessaires par jour |
 | **Juridique** | Forme juridique, autorisations, fiscalité… propres au pays (éditable, approfondissable avec Claude) |
 | **SWOT & risques** | Forces, faiblesses, opportunités, menaces, matrice des risques avec mitigation, marché, hypothèses clés |
 | **Devis** | Devis à obtenir, enregistrement des offres reçues, comparatif. Un devis **retenu** lié à une ligne du plan remplace automatiquement son montant dans tous les calculs |

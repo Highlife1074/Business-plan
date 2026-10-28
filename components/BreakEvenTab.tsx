@@ -5,6 +5,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import FinTable, { type FinLine } from "./FinTable";
 import ScenarioBar from "./ScenarioBar";
 import { useMoney } from "./CurrencyProvider";
+import { BreakEvenChart } from "./Charts";
 import { Kpi, useChartColors } from "./ui";
 import type { TabProps } from "./tab";
 import type { YearRow } from "@/lib/finance";
@@ -67,6 +68,14 @@ export default function BreakEvenTab({ plan, proj, update, askClaude }: TabProps
           <Kpi label="Marge de sécurité" value={pct(y.safetyMarginPct)} hint="Baisse de CA supportable avant perte" tone={y.safetyMarginPct < 0 ? "neg" : y.safetyMarginPct < 15 ? "warn" : "pos"} />
           <Kpi label="Activité nécessaire" value={Number.isFinite(ratio) ? pct(ratio * 100, 0) : "—"} hint="de l'activité prévue" />
         </div>
+      </div>
+
+      <div className="card">
+        <h2>Courbe du point mort (année {y.year})</h2>
+        <p className="muted small">
+          Le point mort est atteint là où le chiffre d&apos;affaires croise les charges totales. Axe horizontal : niveau d&apos;activité en % de l&apos;activité prévue.
+        </p>
+        <BreakEvenChart year={y} />
       </div>
 
       <div className="card">
